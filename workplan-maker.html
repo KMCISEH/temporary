@@ -615,7 +615,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <a href="/daily-risk?team=공무팀" class="px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition-all cursor-pointer border border-white/20 flex items-center gap-1" title="다른 일일평가 파일 선택">
+                            <a href="./daily-risk.html?team=공무팀" class="px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition-all cursor-pointer border border-white/20 flex items-center gap-1" title="다른 일일평가 파일 선택">
                                 <span>📂 파일변경</span>
                             </a>
                             <button type="button" onclick="reloadGongmuDailyRisk()" class="px-2 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold transition-all cursor-pointer border border-white/15" title="새로고침">
@@ -659,7 +659,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <a href="/standard-workplan?team=공무팀" class="px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition-all cursor-pointer border border-white/20 flex items-center gap-1" title="표준 작업계획서 99종 DB 열람">
+                            <a href="./standard-workplan.html?team=공무팀" class="px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold transition-all cursor-pointer border border-white/20 flex items-center gap-1" title="표준 작업계획서 99종 DB 열람">
                                 <span>📚 표준 DB</span>
                             </a>
                         </div>
@@ -741,7 +741,7 @@
                             <button type="button" onclick="clearGongmuCompletedList()" class="px-2 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white/90 text-[10px] font-bold transition-all cursor-pointer border border-white/15" title="완성 목록 비우기">
                                 <span>🗑️ 비우기</span>
                             </button>
-                            <a href="/tbm-maker?team=공무팀" class="px-2.5 py-1.5 rounded-lg bg-white text-emerald-900 text-[10px] font-black shadow-xs hover:shadow transition-all flex items-center gap-1 cursor-pointer">
+                            <a href="./tbm-maker.html?team=공무팀" class="px-2.5 py-1.5 rounded-lg bg-white text-emerald-900 text-[10px] font-black shadow-xs hover:shadow transition-all flex items-center gap-1 cursor-pointer">
                                 <span>🎯 TBM 이동</span>
                             </a>
                         </div>
@@ -997,7 +997,7 @@
             }
 
             // 표준 DB 링크 동기화
-            const dbUrl = `/standard-workplan?team=${encodeURIComponent(team)}`;
+            const dbUrl = `./standard-workplan.html?team=${encodeURIComponent(team)}`;
             const backBtn = document.getElementById('backToDBBtn');
             if (backBtn) backBtn.href = dbUrl;
             const goToStandardBtn = document.getElementById('goToStandardDBBtn');
@@ -1006,7 +1006,7 @@
             if (topNavBtn) topNavBtn.href = dbUrl;
 
             // 3단계 TBM Maker 이동 링크 동기화
-            const tbmUrl = `/tbm-maker?team=${encodeURIComponent(team)}&from=workplan-maker`;
+            const tbmUrl = `./tbm-maker.html?team=${encodeURIComponent(team)}&from=workplan-maker`;
             const topTbmBtn = document.getElementById('goToTBMMakerBtn');
             if (topTbmBtn) topTbmBtn.href = tbmUrl;
             const btmTbmBtn = document.getElementById('goToTBMMakerBtnBottom');
@@ -1022,7 +1022,7 @@
             if (targetTeam === '공무팀') {
                 container.innerHTML = `
                 <!-- Step 1: 일일 위험성평가 -->
-                <a href="/daily-risk?team=공무팀" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 공무팀 일일 위험성평가 목록 열람">
+                <a href="./daily-risk.html?team=공무팀" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 공무팀 일일 위험성평가 목록 열람">
                     <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1038,7 +1038,7 @@
                 </div>
 
                 <!-- Step 2: 표준 작업계획서 DB -->
-                <a href="/standard-workplan?team=공무팀" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="2단계: 부서별 표준 작업계획서 DB 열람">
+                <a href="./standard-workplan.html?team=공무팀" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="2단계: 부서별 표준 작업계획서 DB 열람">
                     <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1071,7 +1071,7 @@
                 </div>
 
                 <!-- Step 4: TBM Maker -->
-                <a href="/tbm-maker?team=공무팀" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: 작업계획서 기반 TBM 일지 생성">
+                <a href="./tbm-maker.html?team=공무팀" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: 작업계획서 기반 TBM 일지 생성">
                     <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1087,7 +1087,7 @@
                 </div>
 
                 <!-- Step 5: TBM일지관리 -->
-                <a href="/history?team=공무팀" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                <a href="./history.html?team=공무팀" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 팀별 전자서명 완료 여부 및 명부 확인">
                     <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1103,7 +1103,7 @@
                 </div>
 
                 <!-- Step 6: 최종 작업계획서 관리 -->
-                <a href="/admin?team=공무팀" id="flowStep6" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="6단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                <a href="./admin.html?team=공무팀" id="flowStep6" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="6단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
                     <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">6</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1117,7 +1117,7 @@
             } else {
                 container.innerHTML = `
                 <!-- Step 1: 표준 작업계획서 DB -->
-                <a href="/standard-workplan?team=${encodeURIComponent(targetTeam)}" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 부서별 표준 작업계획서 DB 열람">
+                <a href="./standard-workplan.html?team=${encodeURIComponent(targetTeam)}" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 부서별 표준 작업계획서 DB 열람">
                     <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1150,7 +1150,7 @@
                 </div>
 
                 <!-- Step 3: TBM Maker -->
-                <a href="/tbm-maker?team=${encodeURIComponent(targetTeam)}" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="3단계: 작업계획서 기반 TBM 일지 생성">
+                <a href="./tbm-maker.html?team=${encodeURIComponent(targetTeam)}" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="3단계: 작업계획서 기반 TBM 일지 생성">
                     <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1166,7 +1166,7 @@
                 </div>
 
                 <!-- Step 4: TBM일지관리 -->
-                <a href="/history?team=${encodeURIComponent(targetTeam)}" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                <a href="./history.html?team=${encodeURIComponent(targetTeam)}" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인">
                     <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1182,7 +1182,7 @@
                 </div>
 
                 <!-- Step 5: 최종 작업계획서 관리 -->
-                <a href="/admin?team=${encodeURIComponent(targetTeam)}" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                <a href="./admin.html?team=${encodeURIComponent(targetTeam)}" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
                     <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
@@ -1766,7 +1766,7 @@
 
                         <!-- 하단 행: [📋 계획서 에디터 ➔ 수정] 단일 전폭 버튼! (확정 버튼 완전 제거) -->
                         <div class="pt-2 border-t border-amber-100">
-                            <a href="/workplan_editor?file=${encodedFile}&team=${encodedTeam}" onclick="saveDraftBeforeEdit('${escapeAttr(wp.fileName)}')" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="웹 에디터에서 계획서 수정 후 저장하면 3단계 완성본으로 등록됩니다">
+                            <a href="./workplan_editor.html?file=${encodedFile}&team=${encodedTeam}" onclick="saveDraftBeforeEdit('${escapeAttr(wp.fileName)}')" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="웹 에디터에서 계획서 수정 후 저장하면 3단계 완성본으로 등록됩니다">
                                 <span class="text-sm group-hover:scale-110 transition-transform">📋</span>
                                 <span>계획서 에디터 ➔ 수정</span>
                             </a>
@@ -1861,7 +1861,7 @@
             const topBtn = document.getElementById('goToTBMMakerBtn');
             const btmBtn = document.getElementById('goToTBMMakerBtnBottom');
 
-            const tbmUrl = `/tbm-maker?team=${encodeURIComponent(currentTeam)}&from=workplan-maker`;
+            const tbmUrl = `./tbm-maker.html?team=${encodeURIComponent(currentTeam)}&from=workplan-maker`;
             if (topBtn) topBtn.href = tbmUrl;
             if (btmBtn) btmBtn.href = tbmUrl;
 
@@ -1911,7 +1911,7 @@
 
                         <!-- 하단 행: [✏️ 재수정] 단일 전폭 버튼 (열기/다운로드/TBM 이동 버튼 제거) -->
                         <div class="pt-2 border-t border-teal-100">
-                            <a href="/workplan_editor?file=${encodedFile}&team=${encodedTeam}" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="에디터에서 다시 수정">
+                            <a href="./workplan_editor.html?file=${encodedFile}&team=${encodedTeam}" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="에디터에서 다시 수정">
                                 <span class="text-sm group-hover:scale-110 transition-transform">✏️</span>
                                 <span>재수정</span>
                             </a>
@@ -1926,7 +1926,7 @@
             if (item) {
                 sessionStorage.setItem('tbmTargetWorkplan', JSON.stringify(item));
             }
-            window.location.href = `/tbm-maker?team=${encodeURIComponent(currentTeam)}&from=workplan-maker`;
+            window.location.href = `./tbm-maker.html?team=${encodeURIComponent(currentTeam)}&from=workplan-maker`;
         }
 
         // ── 5. 진행 및 결과 모달 ──
@@ -2150,7 +2150,7 @@
                     <div class="py-16 text-center space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
                         <div class="text-2xl text-slate-300">📂</div>
                         <p class="text-xs font-bold text-slate-600">${escapeHtml(msg)}</p>
-                        <a href="/daily-risk?team=공무팀" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs hover:bg-emerald-500">
+                        <a href="./daily-risk.html?team=공무팀" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs hover:bg-emerald-500">
                             <span>1단계 일일 위험성평가로 이동 ➔</span>
                         </a>
                     </div>
@@ -2743,7 +2743,7 @@
 
                         <!-- 하단 행: [📋 계획서 에디터 ➔ 수정] 단일 전폭 버튼! (확정 버튼 완전 제거) -->
                         <div class="pt-2 border-t border-amber-100">
-                            <a href="/workplan_editor?file=${encodedFile}&team=공무팀" onclick="saveGongmuDraftBeforeEdit('${escapeAttr(wp.fileName)}')" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="웹 에디터에서 계획서 수정 후 저장하면 4단계 완성본으로 등록됩니다">
+                            <a href="./workplan_editor.html?file=${encodedFile}&team=공무팀" onclick="saveGongmuDraftBeforeEdit('${escapeAttr(wp.fileName)}')" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="웹 에디터에서 계획서 수정 후 저장하면 4단계 완성본으로 등록됩니다">
                                 <span class="text-sm group-hover:scale-110 transition-transform">📋</span>
                                 <span>계획서 에디터 ➔ 수정</span>
                             </a>
@@ -2804,7 +2804,7 @@
 
                         <!-- 하단 행: [✏️ 재수정] 단일 전폭 버튼 (열기/다운로드/TBM 버튼 제거) -->
                         <div class="pt-2 border-t border-teal-100">
-                            <a href="/workplan_editor?file=${encodedFile}&team=공무팀" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="에디터에서 다시 수정">
+                            <a href="./workplan_editor.html?file=${encodedFile}&team=공무팀" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer group text-center" title="에디터에서 다시 수정">
                                 <span class="text-sm group-hover:scale-110 transition-transform">✏️</span>
                                 <span>재수정</span>
                             </a>
@@ -2992,7 +2992,7 @@
             if (badge) badge.textContent = currentAddModalTeam;
 
             const dbLink = document.getElementById('addModalGoToDBLink');
-            if (dbLink) dbLink.href = `/standard-workplan?team=${encodeURIComponent(currentAddModalTeam)}`;
+            if (dbLink) dbLink.href = `./standard-workplan.html?team=${encodeURIComponent(currentAddModalTeam)}`;
 
             const searchInput = document.getElementById('addStandardSearchInput');
             if (searchInput) searchInput.value = '';

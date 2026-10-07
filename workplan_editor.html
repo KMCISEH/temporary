@@ -1442,7 +1442,7 @@
             window.location.href = document.referrer;
           } else {
             const team = currentWorkplan && currentWorkplan.team ? currentWorkplan.team : '공무팀';
-            window.location.href = `/workplan-maker?team=${encodeURIComponent(team)}`;
+            window.location.href = `./workplan-maker.html?team=${encodeURIComponent(team)}`;
           }
         }, 350);
       } catch (e) {
@@ -1599,7 +1599,7 @@
         }
         const params = new URLSearchParams(window.location.search);
         const team = params.get('team') || sessionStorage.getItem('selectedTeam') || '생산1부';
-        window.location.href = '/tbm-maker?team=' + encodeURIComponent(team) + '&load_file=' + encodeURIComponent(currentFilename);
+        window.location.href = './tbm-maker.html?team=' + encodeURIComponent(team) + '&load_file=' + encodeURIComponent(currentFilename);
     }
 </script>
 </body>
