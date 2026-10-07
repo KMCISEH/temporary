@@ -1,0 +1,747 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>작업계획서&TBM Maker</title>
+    <meta name="description" content="금호미쓰이화학 작업계획서&TBM Maker — 팀별 작업 워크플로 허브">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f0fdf4;
+            --bg-subtle: #ecfce5;
+            --card-bg: rgba(255,255,255,0.78);
+            --card-border: rgba(187,247,208,0.7);
+            --card-hover-border: #86efac;
+            --card-shadow: 0 8px 32px -8px rgba(34,197,94,0.10), 0 2px 8px -2px rgba(0,0,0,0.04);
+            --card-hover-shadow: 0 16px 48px -8px rgba(34,197,94,0.18), 0 4px 16px -4px rgba(0,0,0,0.06);
+            --accent: #22c55e;
+            --accent-light: #86efac;
+            --accent-dark: #15803d;
+            --text: #14532d;
+            --text-sub: #166534;
+            --text-muted: #4ade80;
+            --disabled-bg: rgba(241,245,249,0.8);
+            --disabled-border: #e2e8f0;
+            --disabled-text: #94a3b8;
+            --connector: #86efac;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ── Ambient blobs ── */
+        .ambient {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .ambient-blob {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5;
+            animation: blobFloat 20s ease-in-out infinite alternate;
+        }
+        .ab1 { top: -8%; left: 10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(187,247,208,0.7), transparent 70%); }
+        .ab2 { top: 40%; right: -5%; width: 450px; height: 450px; background: radial-gradient(circle, rgba(190,242,100,0.5), transparent 70%); animation-delay: -7s; }
+        .ab3 { bottom: -10%; left: 30%; width: 550px; height: 550px; background: radial-gradient(circle, rgba(134,239,172,0.5), transparent 70%); animation-delay: -14s; }
+        @keyframes blobFloat {
+            0% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(25px,-20px) scale(1.06); }
+            100% { transform: translate(-15px,15px) scale(0.96); }
+        }
+
+        /* ── Layout ── */
+        .page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; }
+
+        /* ── Team Selection ── */
+        #teamSelectView { display: flex; }
+        #workflowView { display: none; }
+
+        .logo-area { text-align: center; margin-bottom: 2.5rem; }
+        .logo-area img { height: 36px; margin-bottom: 0.75rem; }
+        .logo-area h1 { font-size: 1.65rem; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+        .logo-area p { font-size: 0.82rem; color: var(--text-sub); margin-top: 0.35rem; font-weight: 500; opacity: 0.8; }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            gap: 1rem;
+            max-width: 620px;
+            width: 100%;
+        }
+        .team-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid var(--card-border);
+            border-radius: 1.1rem;
+            padding: 1.6rem 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: var(--card-shadow);
+        }
+        .team-card:hover {
+            border-color: var(--card-hover-border);
+            box-shadow: var(--card-hover-shadow);
+            transform: translateY(-4px);
+        }
+        .team-card:active { transform: translateY(-1px) scale(0.98); }
+        .team-icon { font-size: 2rem; margin-bottom: 0.6rem; display: block; }
+        .team-name { font-size: 0.95rem; font-weight: 800; color: var(--text); }
+
+        /* ── Workflow Hub ── */
+        .hub-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .hub-header h1 { font-size: 1.5rem; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }
+        .team-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding: 0.45rem 1rem;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 2rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            box-shadow: 0 4px 14px -4px rgba(34,197,94,0.35);
+        }
+        .team-badge button {
+            background: rgba(255,255,255,0.25);
+            border: none;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.2rem 0.55rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .team-badge button:hover { background: rgba(255,255,255,0.4); }
+
+        /* ── Flowchart ── */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            max-width: 1260px;
+            width: 100%;
+            overflow-x: visible;
+            padding: 1.2rem 0;
+        }
+
+        .flow-step {
+            flex: 0 0 auto;
+            width: 165px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .flow-node {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid var(--card-border);
+            border-radius: 1.2rem;
+            padding: 1.35rem 0.85rem 1.15rem;
+            width: 160px;
+            min-height: 196px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: var(--card-shadow);
+            position: relative;
+        }
+        .flow-node:hover {
+            border-color: var(--card-hover-border);
+            box-shadow: var(--card-hover-shadow);
+            transform: translateY(-5px);
+        }
+        .flow-node:active { transform: translateY(-1px) scale(0.98); }
+
+        .flow-node.disabled {
+            background: var(--disabled-bg);
+            border-color: var(--disabled-border);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .flow-node.disabled:hover { transform: none; box-shadow: none; border-color: var(--disabled-border); }
+        .flow-node.disabled .node-icon { opacity: 0.4; }
+        .flow-node.disabled .node-title { color: var(--disabled-text); }
+        .flow-node.disabled .node-desc { color: #cbd5e1; }
+
+        .node-icon { font-size: 2.1rem; margin-bottom: 0.65rem; display: block; }
+        .node-step-num {
+            position: absolute;
+            top: -9px; left: -9px;
+            width: 24px; height: 24px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(34,197,94,0.3);
+        }
+        .flow-node.disabled .node-step-num { background: #cbd5e1; box-shadow: none; }
+
+        .node-title { font-size: 0.88rem; font-weight: 800; color: var(--text); line-height: 1.35; display: block; word-break: keep-all; }
+        .node-desc { display: block; font-size: 0.67rem; color: var(--text-sub); font-weight: 500; opacity: 0.75; line-height: 1.45; word-break: keep-all; flex-grow: 1; margin-top: 0.55rem; }
+        .node-badge {
+            display: inline-block;
+            margin-top: 0.55rem;
+            padding: 0.16rem 0.55rem;
+            border-radius: 1rem;
+            font-size: 0.62rem;
+            font-weight: 800;
+        }
+        .badge-active { background: #dcfce7; color: #15803d; }
+        .badge-wip { background: #f1f5f9; color: #94a3b8; }
+
+        /* ── Connector arrows ── */
+        .flow-arrow {
+            flex: 0 0 auto;
+            width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 40px; /* align with card center */
+        }
+        .flow-arrow svg { width: 28px; height: 16px; }
+        .flow-arrow.disabled svg path { stroke: #cbd5e1; }
+
+        /* ── Footer ── */
+        .hub-footer {
+            margin-top: 2.5rem;
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-sub);
+            opacity: 0.6;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .flow-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 0;
+            }
+            .flow-arrow {
+                width: auto;
+                padding-bottom: 0;
+                transform: rotate(90deg);
+                margin: -0.2rem 0;
+            }
+            .flow-step { width: 200px; }
+        }
+
+        /* ── Animations ── */
+        .fade-up {
+            opacity: 0; transform: translateY(20px);
+            animation: fadeUp 0.5s ease forwards;
+        }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+        .delay-4 { animation-delay: 0.32s; }
+        .delay-5 { animation-delay: 0.4s; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #bbf7d0; border-radius: 9px; }
+
+        /* Program URL Copy Button */
+        .btn-copy-url {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.45rem 1.1rem;
+            background: #ffffff;
+            color: #15803d;
+            border: 1.5px solid #86efac;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(34,197,94,0.15);
+            transition: all 0.22s cubic-bezier(0.16,1,0.3,1);
+            margin-top: 0.75rem;
+        }
+        .btn-copy-url:hover {
+            background: #f0fdf4;
+            border-color: #22c55e;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34,197,94,0.25);
+        }
+        .btn-copy-url:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Ambient blobs -->
+    <div class="ambient">
+        <div class="ambient-blob ab1"></div>
+        <div class="ambient-blob ab2"></div>
+        <div class="ambient-blob ab3"></div>
+    </div>
+
+    <!-- ════════ 화면 1: 팀 선택 ════════ -->
+    <div id="teamSelectView" class="page">
+        <div class="logo-area fade-up">
+            <img src="./logo.png" alt="금호미쓰이화학">
+            <h1>작업계획서&TBM Maker</h1>
+            <p>작업 팀을 선택하세요</p>
+            <button onclick="copyShareUrl(this)" class="btn-copy-url" title="동료 접속용 프로그램 주소를 복사합니다">
+                <span>📋 프로그램 주소 복사</span>
+            </button>
+        </div>
+        <div class="team-grid" id="teamGrid">
+            <div class="team-card fade-up delay-1" onclick="selectTeam('생산1부')">
+                <span class="team-icon">🏭</span>
+                <span class="team-name">생산1부</span>
+            </div>
+            <div class="team-card fade-up delay-2" onclick="selectTeam('생산2부')">
+                <span class="team-icon">⚙️</span>
+                <span class="team-name">생산2부</span>
+            </div>
+            <div class="team-card fade-up delay-3" onclick="selectTeam('공무팀')">
+                <span class="team-icon">🔧</span>
+                <span class="team-name">공무팀</span>
+            </div>
+            <div class="team-card fade-up delay-4" onclick="selectTeam('제품운영팀')">
+                <span class="team-icon">📦</span>
+                <span class="team-name">제품운영팀</span>
+            </div>
+            <div class="team-card fade-up delay-5" onclick="selectTeam('경영지원팀')">
+                <span class="team-icon">📊</span>
+                <span class="team-name">경영지원팀</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ 화면 2: 워크플로 허브 ════════ -->
+    <div id="workflowView" class="page">
+        <div class="hub-header fade-up">
+            <img src="./logo.png" alt="금호미쓰이화학" style="height:28px; margin-bottom:0.5rem;">
+            <h1>작업계획서&TBM Maker</h1>
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; justify-content:center;">
+                <div class="team-badge">
+                    <span id="selectedTeamName">생산1부</span>
+                    <button onclick="goBackToTeamSelect()">변경</button>
+                </div>
+                <button onclick="copyShareUrl(this)" class="btn-copy-url" style="margin-top:0.75rem;" title="동료 접속용 프로그램 주소를 복사합니다">
+                    <span>📋 프로그램 주소 복사</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 순서도 -->
+        <div class="flow-container" id="flowContainer">
+            <!-- Step 1: 표준 작업계획서 DB -->
+            <div class="flow-step fade-up delay-1">
+                <div class="flow-node" onclick="goTo('/standard-workplan')" style="border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.15);">
+                    <span class="node-step-num">1</span>
+                    <span class="node-icon">📚</span>
+                    <span class="node-title">표준 작업계획서 DB</span>
+                    <span class="node-desc">부서별 표준 작업계획서 모음</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 2: 일일 작업계획서 Maker -->
+            <div class="flow-step fade-up delay-2">
+                <div class="flow-node" onclick="goTo('/workplan-maker')" style="border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.15);">
+                    <span class="node-step-num">2</span>
+                    <span class="node-icon">✨</span>
+                    <span class="node-title">일일 작업계획서 Maker</span>
+                    <span class="node-desc">위험성평가 기반 일일계획서 자동생성</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 3: TBM Maker (메인) -->
+            <div class="flow-step fade-up delay-3">
+                <div class="flow-node" onclick="goTo('/tbm-maker')" style="border-color: var(--accent); box-shadow: 0 8px 32px -8px rgba(34,197,94,0.22);">
+                    <span class="node-step-num" style="width:28px; height:28px; font-size:0.8rem;">3</span>
+                    <span class="node-icon">🎯</span>
+                    <span class="node-title">TBM Maker</span>
+                    <span class="node-desc">날씨·위험성·AI 브리핑 자동 생성</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 4: TBM일지관리 -->
+            <div class="flow-step fade-up delay-4">
+                <div class="flow-node" onclick="goTo('/history')">
+                    <span class="node-step-num">4</span>
+                    <span class="node-icon">✍️</span>
+                    <span class="node-title">TBM일지관리</span>
+                    <span class="node-desc">현장 전자서명 완료 여부 및 명부 확인</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 5: 최종 작업계획서 관리 -->
+            <div class="flow-step fade-up delay-5">
+                <div class="flow-node" onclick="goTo('/admin')">
+                    <span class="node-step-num">5</span>
+                    <span class="node-icon">📑</span>
+                    <span class="node-title">최종 작업계획서 관리</span>
+                    <span class="node-desc">QR작업계획서 보관 및 이력 관리</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hub-footer fade-up delay-5">
+            금호미쓰이화학 작업계획서&TBM Maker &middot; 사내 네트워크 전용
+        </div>
+    </div>
+
+    <!-- WIP Toast -->
+    <div id="wipToast" style="
+        position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(80px);
+        background: #1e293b; color: #fff; padding: 0.75rem 1.5rem; border-radius: 0.8rem;
+        font-size: 0.82rem; font-weight: 700; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        z-index: 999; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.35s;
+        opacity: 0; pointer-events: none;
+    ">🚧 개발 중인 기능입니다. 곧 오픈됩니다!</div>
+
+    <script>
+        let currentTeam = '';
+
+        // URL에 ?team=이 명시된 경우에만 워크플로 허브로 직행, 그 외에는 항상 깨끗한 팀 선택 화면 먼저 표시
+        (function init() {
+            const params = new URLSearchParams(window.location.search);
+            const teamParam = params.get('team');
+            if (teamParam) {
+                selectTeam(teamParam, true);
+            }
+        })();
+
+        function selectTeam(team, skipAnim) {
+            currentTeam = team;
+            sessionStorage.setItem('selectedTeam', team);
+            try { localStorage.setItem('kmci_current_team', team); } catch (_) {}
+            document.getElementById('selectedTeamName').textContent = team;
+
+            // 공무팀 전용 6단계 vs 타 부서 5단계 순서도 동적 렌더링
+            renderFlowContainer(team);
+
+            // Switch views
+            document.getElementById('teamSelectView').style.display = 'none';
+            const wfView = document.getElementById('workflowView');
+            wfView.style.display = 'flex';
+
+            // Re-trigger animations
+            if (!skipAnim) {
+                wfView.querySelectorAll('.fade-up').forEach(el => {
+                    el.style.animation = 'none';
+                    el.offsetHeight; // reflow
+                    el.style.animation = '';
+                });
+            }
+        }
+
+        function renderFlowContainer(team) {
+            const container = document.getElementById('flowContainer');
+            if (!container) return;
+
+            if (team === '공무팀') {
+                container.innerHTML = `
+            <!-- Step 1: 일일 위험성평가 (공무팀 1단계 특화) -->
+            <div class="flow-step fade-up delay-1">
+                <div class="flow-node" onclick="goTo('/daily-risk')" style="border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.2);">
+                    <span class="node-step-num">1</span>
+                    <span class="node-icon">🛡️</span>
+                    <span class="node-title">일일 위험성평가</span>
+                    <span class="node-desc">일일 위험성평가 파일 현황 열람</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 2: 표준 작업계획서 DB -->
+            <div class="flow-step fade-up delay-2">
+                <div class="flow-node" onclick="goTo('/standard-workplan')" style="border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.15);">
+                    <span class="node-step-num">2</span>
+                    <span class="node-icon">📚</span>
+                    <span class="node-title">표준 작업계획서 DB</span>
+                    <span class="node-desc">부서별 표준 작업계획서 모음</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 3: 일일 작업계획서 Maker -->
+            <div class="flow-step fade-up delay-3">
+                <div class="flow-node" onclick="goTo('/workplan-maker')" style="border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.15);">
+                    <span class="node-step-num">3</span>
+                    <span class="node-icon">✨</span>
+                    <span class="node-title">일일 작업계획서 Maker</span>
+                    <span class="node-desc">위험성평가 기반 일일계획서 자동생성</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 4: TBM Maker (메인) -->
+            <div class="flow-step fade-up delay-4">
+                <div class="flow-node" onclick="goTo('/tbm-maker')" style="border-color: var(--accent); box-shadow: 0 8px 32px -8px rgba(34,197,94,0.22);">
+                    <span class="node-step-num" style="width:28px; height:28px; font-size:0.8rem;">4</span>
+                    <span class="node-icon">🎯</span>
+                    <span class="node-title">TBM Maker</span>
+                    <span class="node-desc">날씨·위험성·AI 브리핑 자동 생성</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 5: TBM일지관리 -->
+            <div class="flow-step fade-up delay-5">
+                <div class="flow-node" onclick="goTo('/history')">
+                    <span class="node-step-num">5</span>
+                    <span class="node-icon">✍️</span>
+                    <span class="node-title">TBM일지관리</span>
+                    <span class="node-desc">현장 전자서명 완료 여부 및 명부 확인</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 6: 최종 작업계획서 관리 -->
+            <div class="flow-step fade-up delay-5">
+                <div class="flow-node" onclick="goTo('/admin')">
+                    <span class="node-step-num">6</span>
+                    <span class="node-icon">📑</span>
+                    <span class="node-title">최종 작업계획서 관리</span>
+                    <span class="node-desc">QR작업계획서 보관 및 이력 관리</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+                `;
+            } else {
+                container.innerHTML = `
+            <!-- Step 1: 표준 작업계획서 DB -->
+            <div class="flow-step fade-up delay-1">
+                <div class="flow-node" onclick="goTo('/standard-workplan')" style="border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.15);">
+                    <span class="node-step-num">1</span>
+                    <span class="node-icon">📚</span>
+                    <span class="node-title">표준 작업계획서 DB</span>
+                    <span class="node-desc">부서별 표준 작업계획서 모음</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 2: 일일 작업계획서 Maker -->
+            <div class="flow-step fade-up delay-2">
+                <div class="flow-node" onclick="goTo('/workplan-maker')" style="border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.15);">
+                    <span class="node-step-num">2</span>
+                    <span class="node-icon">✨</span>
+                    <span class="node-title">일일 작업계획서 Maker</span>
+                    <span class="node-desc">위험성평가 기반 일일계획서 자동생성</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 3: TBM Maker (메인) -->
+            <div class="flow-step fade-up delay-3">
+                <div class="flow-node" onclick="goTo('/tbm-maker')" style="border-color: var(--accent); box-shadow: 0 8px 32px -8px rgba(34,197,94,0.22);">
+                    <span class="node-step-num" style="width:28px; height:28px; font-size:0.8rem;">3</span>
+                    <span class="node-icon">🎯</span>
+                    <span class="node-title">TBM Maker</span>
+                    <span class="node-desc">날씨·위험성·AI 브리핑 자동 생성</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 4: TBM일지관리 -->
+            <div class="flow-step fade-up delay-4">
+                <div class="flow-node" onclick="goTo('/history')">
+                    <span class="node-step-num">4</span>
+                    <span class="node-icon">✍️</span>
+                    <span class="node-title">TBM일지관리</span>
+                    <span class="node-desc">현장 전자서명 완료 여부 및 명부 확인</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow">
+                <svg viewBox="0 0 38 18" fill="none"><path d="M2 9h28m0 0l-6-5.5m6 5.5l-6 5.5" stroke="#86efac" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <!-- Step 5: 최종 작업계획서 관리 -->
+            <div class="flow-step fade-up delay-5">
+                <div class="flow-node" onclick="goTo('/admin')">
+                    <span class="node-step-num">5</span>
+                    <span class="node-icon">📑</span>
+                    <span class="node-title">최종 작업계획서 관리</span>
+                    <span class="node-desc">QR작업계획서 보관 및 이력 관리</span>
+                    <span class="node-badge badge-active">사용 가능</span>
+                </div>
+            </div>
+                `;
+            }
+        }
+
+        function goBackToTeamSelect() {
+            sessionStorage.removeItem('selectedTeam');
+            document.getElementById('workflowView').style.display = 'none';
+            document.getElementById('teamSelectView').style.display = 'flex';
+        }
+
+        function goTo(path) {
+            let target = path.replace(/^\//, '');
+            if (!target.includes('.html')) {
+                const parts = target.split('?');
+                target = parts[0] + '.html' + (parts[1] ? '?' + parts[1] : '');
+            }
+            const sep = target.includes('?') ? '&' : '?';
+            window.location.href = target + sep + 'team=' + encodeURIComponent(currentTeam);
+        }
+
+        let shareLanUrl = 'https://tbm-mobile-seven.vercel.app/tbm';
+        async function initShareUrl() {
+            try {
+                const res = await fetch('/api/system-status');
+                const data = await res.json();
+                if (data && data.publicHost && data.publicHost.fixedUrl) {
+                    shareLanUrl = data.publicHost.fixedUrl;
+                } else if (data && data.server && data.server.fixedUrl && data.server.fixedUrl.includes('vercel.app')) {
+                    shareLanUrl = data.server.fixedUrl;
+                }
+            } catch (_) {}
+            if (!shareLanUrl || !shareLanUrl.includes('vercel.app')) {
+                shareLanUrl = 'https://tbm-mobile-seven.vercel.app/tbm';
+            }
+        }
+        initShareUrl();
+
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise((resolve, reject) => {
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.top = '0';
+                    textArea.style.left = '0';
+                    textArea.style.width = '2em';
+                    textArea.style.height = '2em';
+                    textArea.style.padding = '0';
+                    textArea.style.border = 'none';
+                    textArea.style.outline = 'none';
+                    textArea.style.boxShadow = 'none';
+                    textArea.style.background = 'transparent';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    const success = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (success) resolve();
+                    else reject(new Error('복사 실패'));
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
+        async function copyShareUrl(btnEl) {
+            const url = shareLanUrl || 'https://tbm-mobile-seven.vercel.app/tbm';
+            let copied = false;
+            try {
+                await copyTextToClipboard(url);
+                copied = true;
+            } catch {
+                try {
+                    prompt('프로그램 접속 주소입니다. Ctrl+C를 눌러 복사하세요:', url);
+                    copied = true;
+                } catch (_) {}
+            }
+
+            if (copied) {
+                const toast = document.getElementById('wipToast');
+                if (toast) {
+                    toast.textContent = `📋 프로그램 주소가 복사되었습니다! (${url})`;
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateX(-50%) translateY(0)';
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(-50%) translateY(80px)';
+                    }, 2800);
+                }
+                if (btnEl) {
+                    const originalHtml = btnEl.innerHTML;
+                    btnEl.innerHTML = `<span style="color:#15803d; font-weight:900;">✅ 복사 완료!</span>`;
+                    setTimeout(() => {
+                        btnEl.innerHTML = originalHtml;
+                    }, 2000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+

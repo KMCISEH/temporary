@@ -1,0 +1,2993 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>작업계획서&TBM Maker - TBM일지관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script src="./html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        safety: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f6f8fb;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        /* Ambient Pastel Aurora Glows */
+        .aurora-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .aurora-blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.65;
+            border-radius: 9999px;
+            animation: auroraFloat 18s ease-in-out infinite alternate;
+        }
+        .blob-1 {
+            top: -10%;
+            left: 15%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(167, 243, 208, 0.6) 0%, rgba(110, 231, 183, 0.25) 60%, transparent 80%);
+        }
+        .blob-2 {
+            top: 25%;
+            right: -5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(186, 230, 253, 0.65) 0%, rgba(125, 211, 252, 0.25) 60%, transparent 80%);
+            animation-delay: -5s;
+        }
+        .blob-3 {
+            bottom: -10%;
+            left: 20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(204, 251, 241, 0.6) 0%, rgba(153, 246, 228, 0.2) 60%, transparent 80%);
+            animation-delay: -10s;
+        }
+        @keyframes auroraFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -25px) scale(1.08); }
+            100% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* Soft Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 16px 36px -6px rgba(16, 185, 129, 0.08), 0 6px 16px -2px rgba(15, 23, 42, 0.03);
+        }
+
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.15);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Pulse Animation */
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.15); }
+        }
+        .pulse-dot {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        /* Fade in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* ── A4 단일 1페이지 공식 인쇄 및 PDF 전용 스타일 (상하좌우 완벽 균형 & 규격화) ── */
+        #tbmPrintArea {
+            display: none;
+        }
+
+        .a4-print-sheet {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            color: #0f172a;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.42;
+            font-size: 11px;
+            box-sizing: border-box;
+            word-break: keep-all;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .print-header {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2.5px solid #0f172a;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            min-height: 40px;
+        }
+
+        .print-header-left {
+            display: flex;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .print-logo {
+            height: 28px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .print-header-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+        }
+
+        .print-main-title {
+            font-size: 33px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: 6px;
+            white-space: nowrap;
+            margin: 0;
+            padding: 0;
+            line-height: 1.05;
+        }
+
+        .print-sub-title {
+            font-size: 10.5px;
+            font-weight: 600;
+            color: #475569;
+            margin-top: 1px;
+            white-space: nowrap;
+        }
+
+        .print-header-right {
+            text-align: right;
+            z-index: 1;
+        }
+
+        /* 기본 정보 테이블 */
+        .print-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #334155;
+            margin-bottom: 7px;
+            font-size: 11px;
+        }
+
+        .print-info-table th {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+            border: 1px solid #cbd5e1;
+            padding: 5px 7px;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 11px;
+        }
+
+        .print-info-table td {
+            border: 1px solid #cbd5e1;
+            padding: 5px 9px;
+            color: #1e293b;
+            background-color: #ffffff;
+            font-size: 11px;
+        }
+
+        .print-status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 9.5px;
+            font-weight: 800;
+        }
+        .print-status-tag.status-completed {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .print-status-tag.status-pending {
+            background-color: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        /* 섹션 박스 공통 */
+        .print-section-box {
+            border-radius: 6px;
+            border: 1.2px solid #cbd5e1;
+            margin-bottom: 7px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .section-badge {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4.5px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-amber {
+            background-color: #fef3c7;
+            color: #92400e;
+            border-bottom: 1px solid #fcd34d;
+        }
+
+        .badge-rose {
+            background-color: #ffe4e6;
+            color: #9f1239;
+            border-bottom: 1px solid #fecdd3;
+        }
+
+        .badge-green {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-bottom: 1px solid #a7f3d0;
+        }
+
+        .badge-slate {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .section-content {
+            padding: 6px 11px;
+            font-size: 10.5px;
+            line-height: 1.45;
+        }
+
+        .weather-alert-text {
+            color: #b45309;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .weather-sub-text {
+            color: #475569;
+            font-size: 10px;
+        }
+
+        .hazard-text {
+            color: #be123c;
+            font-weight: 600;
+            font-size: 10.5px;
+            line-height: 1.45;
+        }
+
+        .print-rules-list {
+            margin: 0;
+            padding: 1px 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .print-rules-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            color: #1e293b;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .rule-bullet {
+            color: #059669;
+            font-weight: 900;
+            font-size: 12px;
+        }
+
+        .script-box {
+            margin-bottom: 6px;
+        }
+
+        .script-box .section-content {
+            background-color: #f8fafc;
+            padding: 7px 11px;
+            box-sizing: border-box;
+            letter-spacing: -0.15px;
+            height: 240px !important;
+            max-height: 240px !important;
+            overflow: hidden !important;
+        }
+
+        .script-para {
+            margin-bottom: 2.5px;
+            text-align: justify;
+        }
+
+        .script-rule-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+            margin-top: 1.5px;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: justify;
+        }
+
+        .script-bullet {
+            font-size: 10px;
+            color: #ea580c;
+            flex-shrink: 0;
+            margin-top: 1.5px;
+        }
+
+        /* ── 20인 서명부 전용 스타일 (31px 단정 고정 규격 - 절대 늘리지 않음!) ── */
+        .roster-box {
+            margin-bottom: 6px;
+        }
+
+        .print-roster-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.2px solid #334155;
+            font-size: 10.5px;
+        }
+
+        .print-roster-table th {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-weight: 800;
+            border: 1px solid #94a3b8;
+            padding: 3.5px 2px;
+            text-align: center;
+            font-size: 10px;
+            height: 21px;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+
+        .print-roster-table td {
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            vertical-align: middle;
+            height: 31px !important;
+            max-height: 31px !important;
+            padding: 1px 2px;
+            background-color: #ffffff;
+        }
+
+        .roster-no {
+            font-family: monospace;
+            font-weight: 800;
+            color: #475569;
+            background-color: #f8fafc;
+            font-size: 10px;
+        }
+
+        .roster-name {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 10.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .roster-sig-cell {
+            padding: 1px !important;
+            background-color: #ffffff;
+            height: 31px !important;
+        }
+
+        .roster-sig-img {
+            max-height: 27px;
+            max-width: 85px;
+            object-fit: contain;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .roster-empty-cell {
+            color: #cbd5e1;
+            font-size: 10px;
+        }
+
+        .roster-placeholder {
+            color: #e2e8f0;
+            font-size: 9.5px;
+        }
+
+        /* 하단 푸터 */
+        .print-doc-footer {
+            border-top: 1.2px solid #94a3b8;
+            padding-top: 5px;
+            margin-top: 6px;
+            font-size: 9.5px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .footer-legal-notice {
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+
+        .footer-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 9px;
+            color: #94a3b8;
+        }
+
+        /* 인쇄 미디어 쿼리 (A4 단일 1페이지 꽉 찬 아름다운 출력) */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 9mm 12mm 9mm 12mm;
+            }
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                word-break: keep-all !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body > *:not(#tbmPrintArea) {
+                display: none !important;
+            }
+            #tbmPrintArea {
+                display: block !important;
+                position: static !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                box-shadow: none !important;
+                visibility: visible !important;
+                z-index: auto !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden bg-[#f0fdf4] text-slate-800 flex flex-col">
+    <!-- ── 파스텔 오로라 배경 ── -->
+    <div class="aurora-bg">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2"></div>
+        <div class="aurora-blob blob-3"></div>
+    </div>
+
+    <!-- ── 상단 글로벌 순서도 네비게이션 (모든 하위화면 공통 상단 고정) ── -->
+    <!-- ── 상단 글로벌 순서도 네비게이션 (모든 하위화면 공통 상단 고정) ── -->
+    <header class="w-full relative z-30 border-b border-emerald-200/80 bg-white/95 backdrop-blur-md sticky top-0 shadow-xs">
+        <!-- 1단: 브랜드 로고, 팀 선택기 & 빠른 유틸리티 바 -->
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 shrink-0 z-10">
+                <!-- 홈/허브 복귀 버튼 -->
+                <a href="./index.html" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 transition-all cursor-pointer border border-slate-200" title="워크플로 허브로 이동">
+                    <span>🏠</span>
+                    <span class="hidden sm:inline">메인 허브</span>
+                    <span class="sm:hidden">허브</span>
+                </a>
+
+                <div class="h-4 w-px bg-emerald-200 shrink-0"></div>
+
+                <a href="./index.html" class="flex items-center group cursor-pointer shrink-0" title="메인 순서도 허브로 이동">
+                    <img src="./logo.png" alt="금호미쓰이화학" class="h-5 sm:h-6 object-contain">
+                </a>
+            </div>
+
+            <!-- 상단 정가운데: 작업계획서&TBM Maker (글씨 크기 2배) -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-auto">
+                <a href="./index.html" class="text-xl sm:text-2xl font-black text-slate-900 hover:text-emerald-700 tracking-tight transition-colors whitespace-nowrap" title="메인 순서도 허브로 이동">
+                    작업계획서&TBM Maker
+                </a>
+            </div>
+        </div>
+
+        <!-- 2단: 작업 순서도 파이프라인 (Workflow Flowchart Pipeline - 원클릭 즉시 이동) -->
+        <nav aria-label="작업 순서도" class="bg-gradient-to-r from-slate-50 via-emerald-50/30 to-slate-50 px-3 sm:px-6 py-2 overflow-x-auto scrollbar-thin border-b border-emerald-200/70">
+            <div id="flowNavContainer" class="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-[820px]">
+                <!-- Step 1: 표준 작업계획서 DB -->
+                <a href="./standard-workplan.html" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 부서별 표준 작업계획서 DB 게시판">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">부서별 표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <!-- 화살표 -->
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 일일 작업계획서 Maker -->
+                <a href="./workplan-maker.html" id="flowStep2" onclick="navToStep(event, '/workplan-maker')" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200/90 bg-amber-50/80 hover:bg-amber-100 hover:border-amber-300 text-amber-950 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="2단계: AI 기반 일일 작업계획서 자동 생성">
+                    <span class="w-6 h-6 rounded-full bg-amber-200 group-hover:bg-amber-300 text-amber-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-amber-700/80 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <!-- 화살표 -->
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: TBM Maker -->
+                <a href="./tbm-maker.html" id="flowStep3" onclick="navToStep(event, '/tbm-maker')" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="3단계: TBM 안전 브리핑 & QR 생성">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">TBM Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-emerald-700 font-medium truncate">날씨·위험성·AI 대본</p>
+                    </div>
+                </a>
+
+                <!-- 화살표 -->
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM일지관리 (현재 화면 활성화) -->
+                <div class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left" title="4단계: 팀별 전자서명 현황 및 서명 완료 여부 확인 (현재 화면)">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate">TBM일지관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">서명 완료 여부 및 명부 확인</p>
+                    </div>
+                </div>
+
+                <!-- 화살표 -->
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: 최종 작업계획서 관리 -->
+                <a href="./admin.html" id="flowStep5" onclick="navToStep(event, '/admin')" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">최종 작업계획서 관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ── 메인 와이드 워크스페이스 캔버스 ── -->
+    <main class="relative z-10 flex-1 p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl w-full mx-auto">
+            <div class="flex flex-col md:flex-row items-stretch gap-4">
+            <!-- 커스텀 팀 선택 드롭다운 (고급 글래스모피즘 & 부서별 배지) -->
+            <div class="relative w-fit min-w-[220px] h-[104px] shrink-0" id="teamDropdownContainer">
+                <select id="globalFlowTeamSelect" onchange="onGlobalFlowTeamChange(this.value)" class="hidden" title="소속 팀 변경">
+                    <option value="">전체 부서</option>
+                    <option value="생산1부">생산1부</option>
+                    <option value="생산2부">생산2부</option>
+                    <option value="공무팀">공무팀</option>
+                    <option value="제품운영팀">제품운영팀</option>
+                    <option value="경영지원팀">경영지원팀</option>
+                </select>
+                <button type="button" id="teamDropdownTrigger" onclick="toggleCustomTeamDropdown()" class="w-full h-full flex items-center justify-between gap-3.5 bg-gradient-to-br from-white/95 via-emerald-50/70 to-emerald-100/50 hover:from-white hover:to-emerald-100/80 border-2 border-emerald-500 hover:border-emerald-600 rounded-2xl px-5 py-3.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group text-left">
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700/80 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            조회 대상 부서
+                        </span>
+                        <span id="currentTeamDisplay" class="text-2xl sm:text-[28px] font-black text-emerald-950 tracking-tight leading-tight mt-0.5 group-hover:text-emerald-800 transition-colors">
+                            전체 부서
+                        </span>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100/80 border border-emerald-300/80 text-emerald-800 flex items-center justify-center shrink-0 shadow-3xs group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <svg id="teamDropdownArrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </button>
+
+                <!-- 드롭다운 메뉴 레이어 -->
+                <div id="teamDropdownMenu" class="hidden absolute top-[calc(100%+8px)] left-0 w-72 bg-white/95 backdrop-blur-xl border border-emerald-200/90 rounded-2xl shadow-xl shadow-emerald-950/10 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 space-y-1">
+                    <div class="px-3 py-1.5 text-[11px] font-extrabold text-slate-600 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
+                        <span>조회 부서 변경</span>
+                        <span class="text-[10px] text-emerald-600 font-bold">전체 + 5개팀</span>
+                    </div>
+                    <div class="space-y-1 pt-1" id="teamOptionsList">
+                        <button type="button" onclick="selectCustomTeam('')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🌐</span>
+                                <div>
+                                    <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">전체 부서</p>
+                                    <p class="text-[10px] text-slate-600 font-normal">모든 부서의 통합 TBM 이력</p>
+                                </div>
+                            </div>
+                            <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                        </button>
+                        <button type="button" onclick="selectCustomTeam('생산1부')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="생산1부">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🏢</span>
+                                <div>
+                                    <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">생산1부</p>
+                                        <p class="text-[10px] text-slate-600 font-normal">1공장 운전관리</p>
+                                    </div>
+                                </div>
+                                <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                            </button>
+                            <button type="button" onclick="selectCustomTeam('생산2부')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="생산2부">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🏭</span>
+                                    <div>
+                                        <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">생산2부</p>
+                                        <p class="text-[10px] text-slate-600 font-normal">2공장 운전관리</p>
+                                </div>
+                            </div>
+                            <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                        </button>
+                        <button type="button" onclick="selectCustomTeam('공무팀')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="공무팀">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🔧</span>
+                                <div>
+                                    <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">공무팀</p>
+                                    <p class="text-[10px] text-slate-600 font-normal">기계·전기·계기·배관 정비</p>
+                                </div>
+                            </div>
+                            <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                        </button>
+                                    <button type="button" onclick="selectCustomTeam('제품운영팀')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="제품운영팀">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">📦</span>
+                                            <div>
+                                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">제품운영팀</p>
+                                                <p class="text-[10px] text-slate-600 font-normal">출하·포장·제품 관리</p>
+                                            </div>
+                                        </div>
+                                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                                    </button>
+                                    <button type="button" onclick="selectCustomTeam('경영지원팀')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="경영지원팀">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">💼</span>
+                                            <div>
+                                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">경영지원팀</p>
+                                                <p class="text-[10px] text-slate-600 font-normal">총무·물류 운영·지원</p>
+                                            </div>
+                                        </div>
+                                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                                    </button>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 flex flex-1 min-h-[104px] items-center justify-between gap-4 border-l-4 border-l-emerald-600">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black">✍️ 전자서명 관리 현황</span>
+                        <span class="text-xs text-slate-500">현장 작업자 실시간 서명 완료 여부 모니터링</span>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tight">TBM일지관리</h2>
+                    <p class="text-xs text-slate-600 mt-1">부서별 작업계획서의 현장 서명 완료 여부를 실시간으로 대조·확인하고 완료된 정본 TBM 일지를 즉시 열람합니다.</p>
+                </div>
+            </div>
+            </div>
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 1) 서명 완료율 (핵심 지표) -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group border-l-4 border-l-emerald-600 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-bold text-emerald-800">서명 완료율</p>
+                    <span class="p-2 rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <h3 id="statSignRate" class="text-3xl font-extrabold text-emerald-700 tracking-tight">0%</h3>
+                    <span class="text-xs text-slate-500 font-medium">완료 비율</span>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-500 font-semibold" id="statRateDetail">총 0건 중 0건 서명완료</div>
+            </div>
+
+            <!-- 2) 서명 완료 건수 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group border-l-4 border-l-teal-600 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-bold text-teal-800">✅ 서명 완료 (확정)</p>
+                    <span class="p-2 rounded-xl bg-teal-50 text-teal-600 border border-teal-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <h3 id="statCompleted" class="text-3xl font-extrabold text-teal-700 tracking-tight">0</h3>
+                    <span id="statSigners" class="text-xs text-teal-700 font-bold">(서명 0명)</span>
+                </div>
+                <div class="mt-2 text-[11px] text-teal-600 font-medium">현장 작업자 서명 날인 완료</div>
+            </div>
+
+            <!-- 3) 서명 대기중 건수 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group border-l-4 border-l-amber-500 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-bold text-amber-800">⏳ 서명 대기 (진행중)</p>
+                    <span class="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <h3 id="statPending" class="text-3xl font-extrabold text-amber-600 tracking-tight">0</h3>
+                    <span class="text-xs text-amber-700 font-bold">건 미서명</span>
+                </div>
+                <div class="mt-2 text-[11px] text-amber-700 font-medium">현장 QR 스캔 및 작업자 서명 필요</div>
+            </div>
+
+            <!-- 4) 전체 작업 건수 -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden group border-l-4 border-l-slate-400 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-bold text-slate-600">총 등록 작업</p>
+                    <span class="p-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <h3 id="statTotal" class="text-3xl font-extrabold text-slate-900 tracking-tight">0</h3>
+                    <span class="text-xs text-slate-500 font-medium">건 보관</span>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-400">오늘 등록: <span id="statToday" class="font-bold text-slate-700">0</span>건 (<span id="statTodayDate">-</span>)</div>
+            </div>
+        </section>
+
+        <!-- ── 2. 검색 & 상태 필터 & 기간 통합 툴바 ── -->
+        <section class="glass-card rounded-2xl p-4 space-y-3">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <!-- 좌측: 상태 세그먼트 필터 (전체 / 서명 대기 / 서명 완료) -->
+                <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                    <div class="inline-flex p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 shadow-inner">
+                        <button onclick="setFilter('all')" id="tabAll" class="filter-tab px-3.5 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 cursor-pointer">
+                            전체보기 <span id="countBadgeAll" class="ml-1 opacity-90">(0)</span>
+                        </button>
+                        <button onclick="setFilter('pending')" id="tabPending" class="filter-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all cursor-pointer">
+                            ⏳ 서명 대기 <span id="countBadgePending" class="ml-1 opacity-80">(0)</span>
+                        </button>
+                        <button onclick="setFilter('completed')" id="tabCompleted" class="filter-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all cursor-pointer">
+                            ✅ 서명 완료 <span id="countBadgeCompleted" class="ml-1 opacity-80">(0)</span>
+                        </button>
+                    </div>
+
+                    <!-- 조회월 선택 -->
+                    <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+                        <label for="historyMonthPicker" class="text-xs font-bold text-slate-500 flex items-center gap-1">
+                            <span>📅</span>
+                            <span class="hidden sm:inline">조회월:</span>
+                        </label>
+                        <input type="month" id="historyMonthPicker" onchange="onMonthPickerChange(this.value)" class="bg-transparent border-none text-slate-800 text-xs font-black cursor-pointer focus:outline-none" title="조회 월 변경">
+                        <button type="button" onclick="resetHistoryMonth()" class="text-[11px] text-emerald-600 hover:underline font-bold ml-1 cursor-pointer">전체</button>
+                    </div>
+
+                    <!-- 데이터 새로고침 -->
+                    <button onclick="refreshData(true, false, true)" id="refreshBtn" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-all cursor-pointer" title="데이터 새로고침">
+                        <svg id="refreshIcon" class="w-3.5 h-3.5 transition-transform text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span class="hidden sm:inline">새로고침</span>
+                    </button>
+                </div>
+
+                <!-- 우측: 기간 설정, 검색 입력창, 정렬, 삭제 -->
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <!-- 기간 설정 -->
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl shadow-2xs text-xs">
+                        <span class="text-slate-500 font-semibold flex items-center gap-1 shrink-0">
+                            기간:
+                        </span>
+                        <input type="date" id="toolbarStartDate" onchange="handleToolbarDateChange()" class="px-1.5 py-0.5 bg-transparent border-none text-slate-700 text-xs focus:outline-none" title="조회 시작일">
+                        <span class="text-slate-400">~</span>
+                        <input type="date" id="toolbarEndDate" onchange="handleToolbarDateChange()" class="px-1.5 py-0.5 bg-transparent border-none text-slate-700 text-xs focus:outline-none" title="조회 종료일">
+                        <button id="toolbarClearDateBtn" onclick="clearToolbarDate()" class="hidden text-slate-400 hover:text-rose-600 text-xs font-bold px-1 cursor-pointer" title="기간 필터 해제">✕</button>
+                    </div>
+
+                    <!-- 검색 입력창 -->
+                    <div class="relative flex-1 sm:w-60">
+                        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="작업명, 일자, 서명자 검색..." class="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-2xs">
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-2.5 flex items-center text-slate-400 hover:text-slate-700 cursor-pointer">
+                            ✕
+                        </button>
+                    </div>
+
+                    <!-- 정렬 버튼 -->
+                    <button onclick="toggleSort()" id="sortBtn" class="flex items-center gap-1 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors shadow-2xs shrink-0 cursor-pointer" title="등록/작업일자 순서 정렬">
+                        <span id="sortLabel">최신순 ↓</span>
+                    </button>
+
+                    <!-- 모두 삭제 버튼 (보조 액션) -->
+                    <button onclick="promptDeleteAll()" id="deleteAllBtn" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer" title="모든 TBM 이력 영구 삭제">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── 3. 전자서명 관리 테이블 ── -->
+        <section id="sessionsContainer" class="space-y-4">
+            <!-- 로딩 상태 -->
+            <div id="loadingState" class="text-center py-20">
+                <div class="inline-block w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-3 text-xs text-slate-600 font-medium">안전 저장소에서 전자서명 이력을 불러오는 중...</p>
+            </div>
+
+            <!-- 전자서명 관리 메인 테이블 -->
+            <div id="boardTableContainer" class="rounded-2xl border border-slate-200/90 bg-white shadow-sm overflow-hidden">
+                <div id="boardScrollBox" class="overflow-x-auto overflow-y-auto max-h-[640px] scrollbar-thin">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="sticky top-0 bg-slate-50/95 backdrop-blur z-10 border-b border-slate-200 text-slate-700 font-bold select-none shadow-3xs">
+                            <tr>
+                                <th class="py-3 px-3 w-12 text-center text-slate-400 font-bold">No</th>
+                                <th class="py-3 px-3 w-28 text-center">작업일시</th>
+                                <th class="py-3 px-3 w-24 text-center">부서</th>
+                                <th class="py-3 px-4 min-w-[240px]">작업명 / 안전공정</th>
+                                <th class="py-3 px-4 w-56 text-center bg-emerald-50/50">✍️ 전자서명 현황</th>
+                                <th class="py-3 px-3 w-28 text-center">정본 TBM일지</th>
+                                <th class="py-3 px-3 w-24 text-center">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="boardTableBody" class="divide-y divide-slate-100">
+                            <!-- 50건씩 렌더링 -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 하단 묶음번호 네비게이션 (50건 이상일 때) -->
+                <div id="boardBottomPagination" class="px-4 py-2.5 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span id="boardRangeInfo" class="text-slate-600 font-medium">1~50건 표시 중</span>
+                    </div>
+                    <div id="boardBundleButtonsBottom" class="flex items-center gap-1 flex-wrap"></div>
+                </div>
+            </div>
+
+            <!-- 검색/필터 결과 없음 상태 -->
+            <div id="emptyState" class="hidden text-center py-20 glass-card rounded-2xl">
+                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </div>
+                <h4 class="text-sm font-bold text-slate-700">해당하는 전자서명 이력이 없습니다</h4>
+                <p class="text-xs text-slate-400 mt-1">검색어나 기간, 부서 필터 조건을 확인해 보세요.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ── 4. 상세 모달 (소프트 글래스모피즘) ── -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6">
+        <div class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="closeDetailModal()"></div>
+        <div class="relative glass-modal rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto z-10 shadow-2xl animate-fade-in">
+            <!-- 모달 헤더 -->
+            <div class="sticky top-0 bg-white/90 backdrop-blur-md px-6 py-5 border-b border-slate-100 flex items-start justify-between z-20">
+                <div>
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span id="modalStatusBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
+                        <span id="modalTeamBadge" class="hidden text-xs font-bold px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200"></span>
+                        <span id="modalTime" class="text-xs text-slate-500"></span>
+                    </div>
+                    <h2 id="modalWorkTitle" class="text-xl font-bold text-slate-900 tracking-tight">작업계획서 상세</h2>
+                    <p id="modalWorkDate" class="text-xs text-emerald-700 mt-0.5"></p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <a id="modalHeaderPdfBtn" href="#" target="_blank" rel="noopener noreferrer" title="TBM일지 바로 보기 (새 창 열기)" class="px-3 py-1.5 text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm shadow-rose-600/20 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span class="hidden sm:inline">TBM일지 보기</span>
+                    </a>
+                    <button onclick="closeDetailModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 모달 바디 -->
+            <div class="p-6 space-y-6">
+
+                <!-- 1) 최상단: 전자서명 완료 여부 & 명부 현황 카드 -->
+                <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border-2 border-emerald-300 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="p-1.5 rounded-lg bg-emerald-600 text-white text-xs">✍️</span>
+                            <h3 class="text-sm font-black text-slate-900 tracking-tight">현장 전자서명 확인 명부</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="modalSignerCountBadge" class="text-xs text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300">0명 서명</span>
+                            <span id="modalSignerStateNotice" class="text-[11px] font-bold text-slate-500">실시간 서명 상태</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600">현장에서 모바일 QR을 통해 작업자가 서명한 실제 자필 서명 이미지 및 날인 시각입니다.</p>
+                    
+                    <!-- 참석자 서명 갤러리 (자필 이미지) -->
+                    <div id="modalSignaturesList" class="grid sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1"></div>
+                </div>
+
+                <!-- 2) 음성 안내 (디바이스 자체 음성 낭독) -->
+                <div id="modalAudioSection" class="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                        TBM 대본 음성 낭독 (디바이스 자체 음성)
+                    </span>
+                    <button onclick="toggleModalTts()" id="modalTtsBtn" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-xl transition-colors flex items-center gap-1 shadow-xs cursor-pointer">
+                        <span>🔊</span><span>대본 읽기</span>
+                    </button>
+                </div>
+
+                <!-- 3) 특보 & 화학물질 경고 박스 -->
+                <div id="modalAlertBox" class="space-y-3"></div>
+
+                <!-- 4) 핵심 안전 대책 -->
+                <div>
+                    <h3 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 핵심 안전 수칙
+                    </h3>
+                    <ul id="modalKeyPoints" class="space-y-1.5"></ul>
+                </div>
+
+                <!-- 5) TBM 대본 본문 -->
+                <div>
+                    <h3 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 현장 TBM 문구
+                    </h3>
+                    <div class="p-5 rounded-2xl bg-white/75 border border-white/90 text-slate-800 text-sm leading-relaxed whitespace-pre-wrap font-normal shadow-xs" id="modalScript"></div>
+                </div>
+
+                <!-- 내부 폴더 정보 안내 -->
+                <div class="p-3.5 rounded-xl bg-white/70 border border-slate-200/80 text-[11px] text-slate-500 flex items-center justify-between shadow-xs">
+                    <div>
+                        <span class="font-medium text-slate-700">로컬 저장 위치: </span>
+                        <code id="modalFolderName" class="text-emerald-700 font-mono"></code>
+                    </div>
+                    <span class="text-slate-400">tbm-store/sessions</span>
+                </div>
+            </div>
+
+            <!-- 모달 푸터 버튼 바 -->
+            <div class="sticky bottom-0 bg-white/90 backdrop-blur-md px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button id="modalDownloadBtn" class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-sm shadow-emerald-600/20" title="QR 포함 엑셀 작업계획서 다운로드">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>QR작업계획서</span>
+                    </button>
+                    <!-- TBM일지 완성본 보기 버튼 (브라우저 내장 뷰어 즉시 열람) -->
+                    <a id="modalPdfBtn" href="#" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-all shadow-sm shadow-rose-600/20 cursor-pointer" title="TBM일지 완성본 바로 보기 (새 창 열람)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>TBM일지 보기</span>
+                    </a>
+                    <button id="modalRevertBtn" class="hidden px-3 py-2 text-xs font-medium text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors">
+                        서명 제출 취소
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="modalDeleteBtn" class="px-3 py-2 text-xs font-medium text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>삭제</span>
+                    </button>
+                    <button onclick="closeDetailModal()" class="px-4 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 shadow-xs transition-colors">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 5. QR 코드 팝업 모달 ── -->
+    <div id="qrModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm" onclick="closeQrModal()"></div>
+        <div class="relative glass-modal rounded-3xl p-6 w-full max-w-sm z-10 text-center animate-fade-in shadow-2xl">
+            <h3 class="text-base font-bold text-slate-800 mb-1 flex items-center justify-center gap-1.5">
+                <span class="text-emerald-600">📱</span> 현장 반장용 모바일 QR
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">휴대폰 카메라로 스캔하여 TBM 브리핑을 열람하세요.</p>
+            
+            <div class="p-4 bg-white rounded-2xl inline-block shadow-md mx-auto border border-slate-100">
+                <img id="qrModalImg" src="" alt="QR" class="w-48 h-48 object-contain">
+            </div>
+
+            <div class="mt-4 p-2.5 rounded-xl bg-white/80 border border-slate-200 text-[11px] text-emerald-800 break-all select-all font-mono shadow-xs" id="qrModalLink"></div>
+
+            <div class="mt-5">
+                <button onclick="closeQrModal()" class="w-full py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 shadow-xs transition-colors">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 6. 수동 삭제 확인 모달 ── -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/35 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="relative glass-modal rounded-3xl p-6 w-full max-w-md z-10 animate-fade-in shadow-2xl">
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 text-center mb-1">TBM 이력을 완전히 삭제하시겠습니까?</h3>
+            <p class="text-xs text-slate-500 text-center mb-5 leading-relaxed">
+                삭제 시 이 컴퓨터의 <code class="text-rose-600 font-semibold">tbm-store/sessions</code> 폴더 내 엑셀, 대본, 음성, 서명 파일이 영구 삭제되며 복구할 수 없습니다.
+            </p>
+            <div class="p-3 rounded-xl bg-white/80 border border-slate-200 text-xs text-slate-700 mb-6 shadow-xs">
+                <p class="font-bold text-slate-900 truncate" id="deleteTargetTitle">-</p>
+                <p class="text-[11px] text-slate-500 mt-0.5" id="deleteTargetDate">-</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeDeleteModal()" class="flex-1 py-2.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 shadow-xs transition-colors">
+                    취소
+                </button>
+                <button id="confirmDeleteBtn" onclick="executeDelete()" class="flex-1 py-2.5 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-xl transition-all shadow-md shadow-rose-600/20">
+                    영구 삭제
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 6-2. 전체 삭제 확인 모달 ── -->
+    <div id="deleteAllModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeDeleteAllModal()"></div>
+        <div class="relative glass-modal rounded-3xl p-6 w-full max-w-md z-10 animate-fade-in shadow-2xl">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 text-center mb-1">모든 TBM 이력을 삭제하시겠습니까?</h3>
+            <p class="text-xs text-slate-500 text-center mb-4 leading-relaxed">
+                현재 보관된 <b id="deleteAllCountText" class="text-rose-600 font-bold">0건</b>의 TBM 데이터와<br>
+                <code class="text-rose-600 font-semibold">tbm-store/sessions</code> 내 모든 엑셀, 대본, 음성, 서명 파일이 영구 삭제됩니다.
+            </p>
+            <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-700 text-center mb-4">
+                ⚠️ 이 작업은 되돌릴 수 없으며 저장소가 완전히 초기화됩니다.
+            </div>
+            <div class="space-y-1.5 text-left mb-5">
+                <label class="block text-xs font-bold text-slate-700">관리자 비밀번호 확인</label>
+                <input type="password" id="historyDeletePassword" placeholder="관리자 비밀번호 입력" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-rose-500 shadow-xs">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeDeleteAllModal()" class="flex-1 py-2.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 shadow-xs transition-colors">
+                    취소
+                </button>
+                <button id="confirmDeleteAllBtn" onclick="executeDeleteAll()" class="flex-1 py-2.5 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-xl transition-all shadow-md shadow-rose-600/20">
+                    전체 영구 삭제
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── 6-3. PDF 다운로드 실시간 진행 상태 위젯 (우측 상단 브라우저 다운로드 트레이 연동) ── -->
+    <div id="pdfDownloadProgressWidget" class="fixed top-5 right-6 hidden pointer-events-auto transition-all duration-300 max-w-sm w-full" style="z-index: 999999;">
+        <div class="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-rose-100 shadow-slate-900/10">
+            <div class="flex items-start justify-between gap-3 mb-2.5">
+                <div class="flex items-center gap-2.5">
+                    <div id="pdfWidgetIconBox" class="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-rose-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700">TBM일지 다운로드</span>
+                            <span id="pdfWidgetPercent" class="text-xs font-black text-rose-600">30%</span>
+                        </div>
+                        <h4 id="pdfWidgetTitle" class="text-xs font-bold text-slate-800 mt-0.5 truncate max-w-[200px]">TBM_일지.pdf</h4>
+                    </div>
+                </div>
+                <button onclick="closePdfDownloadWidget()" class="text-slate-400 hover:text-slate-600 p-1 -mr-1 -mt-1 rounded-lg hover:bg-slate-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- 프로그레스 바 -->
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-2 relative">
+                <div id="pdfWidgetProgressBar" class="h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-300" style="width: 30%;"></div>
+            </div>
+
+            <!-- 상태 텍스트 & 안내 -->
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+                <span id="pdfWidgetStatusText" class="font-medium text-slate-600 flex items-center gap-1">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                    다운로드 진행 중...
+                </span>
+                <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+                    <span>↗ 우측 상단(↓) 확인</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── A4 공식 인쇄 및 PDF 다운로드용 전용 렌더링 컨테이너 (평소 숨김) ── -->
+    <div id="tbmPrintArea"></div>
+
+    <!-- ── 7. 토스트 알림 ── -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+    <script>
+        let allSessions = [];
+        let currentDetailData = null;
+        let activeFilter = 'all';
+        let searchQuery = '';
+        let sortDesc = true;
+        let deleteTargetId = null;
+        let publicHostBase = window.location.origin;
+        let toolbarDateStart = '';
+        let toolbarDateEnd = '';
+        let historyTeam = '';
+        let historyMonth = '';
+
+        // URL ?team= 또는 localStorage에서 팀 감지
+        (function initHistoryTeam() {
+            const params = new URLSearchParams(window.location.search);
+            historyTeam = params.get('team') || '';
+            historyMonth = params.get('month') || '';
+
+            if (!historyTeam) {
+                try {
+                    const saved = localStorage.getItem('kmci_current_team');
+                    if (saved) historyTeam = saved;
+                } catch (_) {}
+            }
+        })();
+
+        let shareLanUrl = "";
+        async function initShareUrl() {
+            try {
+                const res = await fetch('/api/system-status');
+                const data = await res.json();
+                if (data && data.server && (data.server.fixedUrl || data.server.lanUrl)) {
+                    shareLanUrl = data.server.fixedUrl || data.server.lanUrl;
+                }
+            } catch (_) {}
+            if (!shareLanUrl) {
+                shareLanUrl = 'https://tbm-mobile-seven.vercel.app/tbm';
+            }
+        }
+        initShareUrl();
+
+
+        // 세션 데이터에서 YYYY-MM-DD 날짜 추출
+        function parseSessionDate(s) {
+            if (s.workDate) {
+                const str = String(s.workDate).trim();
+                const m = str.match(/(?:20\d{2}|\d{4})[^\d]+(\d{1,2})[^\d]+(\d{1,2})/);
+                if (m) {
+                    const yMatch = str.match(/\b(20\d{2})\b/);
+                    const y = yMatch ? yMatch[1] : '2026';
+                    const mon = m[1].padStart(2, '0');
+                    const d = m[2].padStart(2, '0');
+                    return `${y}-${mon}-${d}`;
+                }
+                const iso = str.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+                if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+            }
+            if (s.createdAt) {
+                const d = new Date(s.createdAt);
+                if (!isNaN(d.getTime())) {
+                    const kst = new Date(d.getTime() + 9 * 3600000);
+                    return kst.toISOString().slice(0, 10);
+                }
+            }
+            return '';
+        }
+
+        function handleToolbarDateChange() {
+            const sEl = document.getElementById('toolbarStartDate');
+            const eEl = document.getElementById('toolbarEndDate');
+            const cBtn = document.getElementById('toolbarClearDateBtn');
+
+            toolbarDateStart = sEl ? sEl.value : '';
+            toolbarDateEnd = eEl ? eEl.value : '';
+
+            if (cBtn) {
+                if (toolbarDateStart || toolbarDateEnd) cBtn.classList.remove('hidden');
+                else cBtn.classList.add('hidden');
+            }
+            renderDashboard();
+        }
+
+        function clearToolbarDate() {
+            const sEl = document.getElementById('toolbarStartDate');
+            const eEl = document.getElementById('toolbarEndDate');
+            const cBtn = document.getElementById('toolbarClearDateBtn');
+            if (sEl) sEl.value = '';
+            if (eEl) eEl.value = '';
+            if (cBtn) cBtn.classList.add('hidden');
+            toolbarDateStart = '';
+            toolbarDateEnd = '';
+            renderDashboard();
+        }
+
+
+
+        // ── 팀 필터 및 월별 네비게이션 함수 ──
+        function toggleSidebar(open) {
+            const sidebar = document.getElementById('sidebarNav');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar) return;
+            const isOpen = (open === undefined)
+                ? sidebar.classList.contains('-translate-x-full')
+                : open;
+            if (isOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                if (overlay) overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                if (overlay) overlay.classList.add('hidden');
+            }
+        }
+
+        function updateTeamTabStyles() {
+            document.querySelectorAll('.team-filter-btn').forEach(btn => {
+                const btnTeam = btn.getAttribute('data-team') || '';
+                const indicator = btn.querySelector('.team-tab-indicator');
+                if (btnTeam === historyTeam) {
+                    btn.className = 'team-filter-btn flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-bold rounded-xl transition-all shadow-md bg-gradient-to-r from-indigo-600 to-indigo-700 text-white border-l-4 border-indigo-400 ring-1 ring-indigo-500/30 cursor-pointer';
+                    if (indicator) indicator.className = 'team-tab-indicator w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                } else {
+                    btn.className = 'team-filter-btn flex items-center justify-between w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-4 border-transparent cursor-pointer';
+                    if (indicator) indicator.className = 'team-tab-indicator w-1.5 h-1.5 rounded-full bg-slate-600';
+                }
+            });
+            const badge = document.getElementById('teamBadgeHistory');
+            if (badge) {
+                if (historyTeam) {
+                    badge.textContent = `🏢 ${historyTeam}`;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.textContent = '🏢 전체 부서';
+                    badge.classList.remove('hidden');
+                }
+            }
+            const mobBadge = document.getElementById('mobileTeamBadge');
+            if (mobBadge) {
+                mobBadge.textContent = historyTeam || '전체 부서';
+            }
+            const teamSelect = document.getElementById('headerTeamSelect');
+            if (teamSelect) {
+                teamSelect.value = historyTeam || '';
+            }
+            updateFlowStepLinks(historyTeam);
+        }
+
+        // ── 상단 글로벌 순서도 네비게이션 제어 함수 ──
+        function onGlobalFlowTeamChange(team) {
+            switchHistoryTeam(team);
+        }
+
+        function navToStep(event, p) {
+            if (event) event.preventDefault();
+            const team = (typeof historyTeam !== "undefined" && historyTeam) || (typeof currentTeam !== "undefined" && currentTeam) || sessionStorage.getItem("selectedTeam") || localStorage.getItem("kmci_current_team") || "생산1부";
+            let target = (p || "").replace(/^\//, "");
+            if (!target.includes(".html")) {
+                const parts = target.split("?");
+                target = parts[0] + ".html" + (parts[1] ? "?" + parts[1] : "");
+            }
+            const sep = target.includes("?") ? "&" : "?";
+            window.location.href = "./" + target + sep + "team=" + encodeURIComponent(team);
+        }
+
+        function showGlobalWipToast(featureName) {
+            showToastMessage(`🚧 [${featureName}] 표준 양식 작성 및 관리 기능은 현재 준비 중입니다.`, 'info');
+        }
+
+        function updateFlowStepLinks(team) {
+            const targetTeam = team || (sessionStorage.getItem('selectedTeam') || localStorage.getItem('kmci_current_team') || '생산1부');
+            const sel = document.getElementById('globalFlowTeamSelect');
+            if (sel && sel.value !== (team || '')) sel.value = team || '';
+
+            const displayEl = document.getElementById('currentTeamDisplay');
+            if (displayEl) displayEl.textContent = team || '전체 부서';
+
+            document.querySelectorAll('#teamOptionsList .team-option-btn').forEach(btn => {
+                const optTeam = btn.getAttribute('data-team');
+                const isSelected = optTeam === (team || '');
+                const checkEl = btn.querySelector('.team-check');
+                if (isSelected) {
+                    btn.classList.add('bg-emerald-50', 'text-emerald-950', 'font-black');
+                    btn.classList.remove('text-slate-800');
+                    if (checkEl) checkEl.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('bg-emerald-50', 'text-emerald-950', 'font-black');
+                    btn.classList.add('text-slate-800');
+                    if (checkEl) checkEl.classList.add('hidden');
+                }
+            });
+
+            renderPipelineNav(targetTeam, team);
+        }
+
+        function renderPipelineNav(targetTeam, rawTeam) {
+            const container = document.getElementById('flowNavContainer');
+            if (!container) return;
+
+            if (rawTeam === '공무팀' || (!rawTeam && targetTeam === '공무팀')) {
+                container.innerHTML = `
+                <!-- Step 1: 일일 위험성평가 -->
+                <a href="/daily-risk?team=공무팀" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 공무팀 일일 위험성평가 목록">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📋</span>
+                            <span class="text-xs font-black truncate">일일 위험성평가</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">당월 위험성평가 엑셀</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 표준 작업계획서 DB -->
+                <a href="/standard-workplan?team=공무팀" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="2단계: 부서별 표준 작업계획서 DB">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: 일일 작업계획서 Maker -->
+                <a href="/workplan-maker?team=공무팀" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200/90 bg-amber-50/80 hover:bg-amber-100 hover:border-amber-300 text-amber-950 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="3단계: AI 일일 작업계획서 생성">
+                    <span class="w-6 h-6 rounded-full bg-amber-200 group-hover:bg-amber-300 text-amber-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-amber-700/80 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM Maker -->
+                <a href="/tbm-maker?team=공무팀" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: TBM 안전 브리핑 & QR 생성">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">TBM Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-emerald-700 font-medium truncate">날씨·위험성·AI 대본</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: TBM일지관리 (현재 화면 활성화) -->
+                <div class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left" title="5단계: 팀별 전자서명 완료 여부 및 명부 확인 (현재 화면)">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate">TBM일지관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </div>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 6: 최종 작업계획서 관리 -->
+                <a href="/admin?team=공무팀" id="flowStep6" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="6단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">6</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">최종 작업계획서 관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+                `;
+            } else {
+                const teamParam = rawTeam ? `?team=${encodeURIComponent(rawTeam)}` : (targetTeam ? `?team=${encodeURIComponent(targetTeam)}` : '');
+                container.innerHTML = `
+                <!-- Step 1: 표준 작업계획서 DB -->
+                <a href="/standard-workplan${teamParam}" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 부서별 표준 작업계획서 DB 게시판">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">부서별 표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 일일 작업계획서 Maker -->
+                <a href="/workplan-maker${teamParam}" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200/90 bg-amber-50/80 hover:bg-amber-100 hover:border-amber-300 text-amber-950 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="2단계: AI 기반 일일 작업계획서 자동 생성">
+                    <span class="w-6 h-6 rounded-full bg-amber-200 group-hover:bg-amber-300 text-amber-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-amber-700/80 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: TBM Maker -->
+                <a href="/tbm-maker${teamParam}" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="3단계: TBM 안전 브리핑 & QR 생성">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">TBM Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-emerald-700 font-medium truncate">날씨·위험성·AI 대본</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM일지관리 (현재 화면 활성화) -->
+                <div class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인 (현재 화면)">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate">TBM일지관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </div>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: 최종 작업계획서 관리 -->
+                <a href="/admin${teamParam}" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">최종 작업계획서 관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+                `;
+            }
+        }
+
+        function toggleCustomTeamDropdown() {
+            const menu = document.getElementById('teamDropdownMenu');
+            const arrow = document.getElementById('teamDropdownArrow');
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                if (arrow) arrow.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                if (arrow) arrow.classList.remove('rotate-180');
+            }
+        }
+
+        function closeCustomTeamDropdown() {
+            const menu = document.getElementById('teamDropdownMenu');
+            const arrow = document.getElementById('teamDropdownArrow');
+            if (menu) menu.classList.add('hidden');
+            if (arrow) arrow.classList.remove('rotate-180');
+        }
+
+        function selectCustomTeam(team) {
+            closeCustomTeamDropdown();
+            onGlobalFlowTeamChange(team);
+        }
+
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('teamDropdownContainer');
+            if (container && !container.contains(e.target)) {
+                closeCustomTeamDropdown();
+            }
+        });
+
+        function switchHistoryTeam(team) {
+            historyTeam = team;
+            if (team) {
+                try {
+                    localStorage.setItem('kmci_current_team', team);
+                    sessionStorage.setItem('selectedTeam', team);
+                } catch (_) {}
+            }
+            const url = new URL(window.location);
+            if (team) url.searchParams.set('team', team);
+            else url.searchParams.delete('team');
+            window.history.replaceState({}, '', url);
+
+            updateTeamTabStyles();
+            if (window.innerWidth < 1024) {
+                toggleSidebar(false);
+            }
+            refreshData(false);
+        }
+
+        function onMonthPickerChange(val) {
+            historyMonth = val || '';
+            const url = new URL(window.location);
+            if (historyMonth) url.searchParams.set('month', historyMonth);
+            else url.searchParams.delete('month');
+            window.history.replaceState({}, '', url);
+            refreshData(false);
+        }
+
+        function changeHistoryMonth(offset) {
+            const picker = document.getElementById('historyMonthPicker');
+            let current = historyMonth || (picker ? picker.value : '');
+            if (!current) {
+                const now = new Date();
+                current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            }
+            const [y, m] = current.split('-').map(Number);
+            const d = new Date(y, m - 1 + offset, 1);
+            const nextMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (picker) picker.value = nextMonth;
+            onMonthPickerChange(nextMonth);
+        }
+
+        function resetHistoryMonth() {
+            const picker = document.getElementById('historyMonthPicker');
+            if (picker) picker.value = '';
+            onMonthPickerChange('');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initDates();
+            updateTeamTabStyles();
+            if (historyMonth) {
+                const picker = document.getElementById('historyMonthPicker');
+                if (picker) picker.value = historyMonth;
+            }
+            await fetchPublicHost();
+            await refreshData(false);
+        });
+
+        function initDates() {
+            const today = getTodayYMD();
+            const el = document.getElementById('statTodayDate');
+            if (el) el.innerText = today;
+        }
+
+        async function fetchPublicHost() {
+            try {
+                const res = await fetch('/api/public-host');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.publicHost) {
+                        publicHostBase = data.publicHost.replace(/\/+$/, '');
+                    }
+                }
+            } catch (err) {
+                console.warn('[공용 호스트 주소 조회]', err);
+            }
+        }
+
+        async function refreshData(showToast = false, silent = false, forceSync = false) {
+            const refreshIcon = document.getElementById('refreshIcon');
+            if (refreshIcon && !silent) refreshIcon.classList.add('animate-spin');
+
+            try {
+                let url = forceSync ? '/api/sessions?sync=true' : '/api/sessions';
+                // 팀+월 필터 쿼리 추가
+                const sep = url.includes('?') ? '&' : '?';
+                const qParts = [];
+                if (historyTeam) qParts.push(`team=${encodeURIComponent(historyTeam)}`);
+                if (historyMonth) qParts.push(`month=${encodeURIComponent(historyMonth)}`);
+                if (qParts.length > 0) url += sep + qParts.join('&');
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('TBM 이력을 불러오지 못했습니다.');
+                allSessions = await res.json();
+                renderDashboard();
+                if (showToast) showToastMessage('최신 TBM 데이터로 갱신되었습니다.', 'success');
+            } catch (err) {
+                console.error(err);
+                if (!silent) showToastMessage(err.message, 'error');
+            } finally {
+                if (refreshIcon && !silent) refreshIcon.classList.remove('animate-spin');
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function renderDashboard() {
+            updateStats();
+            let filtered = allSessions.slice();
+
+            // 1. 상태 필터
+            if (activeFilter === 'pending') {
+                filtered = filtered.filter(s => s.status !== '완료');
+            } else if (activeFilter === 'completed') {
+                filtered = filtered.filter(s => s.status === '완료');
+            }
+
+            // 2. 기간(날짜) 필터
+            if (toolbarDateStart || toolbarDateEnd) {
+                filtered = filtered.filter(s => {
+                    const ymd = parseSessionDate(s);
+                    if (!ymd) return false;
+                    if (toolbarDateStart && ymd < toolbarDateStart) return false;
+                    if (toolbarDateEnd && ymd > toolbarDateEnd) return false;
+                    return true;
+                });
+            }
+
+            // 3. 검색어 필터
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase().trim();
+                filtered = filtered.filter(s => {
+                    const title = (s.workTitle || '').toLowerCase();
+                    const file = (s.fileName || '').toLowerCase();
+                    const date = (s.workDate || '').toLowerCase();
+                    const process = (s.chemicalProcess || '').toLowerCase();
+                    const chemical = (s.chemicalHazard || '').toLowerCase();
+                    const signers = (s.signerName || '').toLowerCase();
+                    const id = (s.id || '').toLowerCase();
+                    return title.includes(q) || file.includes(q) || date.includes(q) || process.includes(q) || chemical.includes(q) || signers.includes(q) || id.includes(q);
+                });
+            }
+
+            filtered.sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0).getTime();
+                const dateB = new Date(b.createdAt || 0).getTime();
+                return sortDesc ? (dateB - dateA) : (dateA - dateB);
+            });
+
+            renderBoardTable(filtered);
+        }
+
+        let currentHistoryBundle = 1;
+        const HISTORY_BUNDLE_SIZE = 50;
+
+        function setHistoryBundle(page) {
+            const total = window.__historyFilteredItems ? window.__historyFilteredItems.length : 0;
+            const totalBundles = Math.ceil(total / HISTORY_BUNDLE_SIZE) || 1;
+            if (page < 1) page = 1;
+            if (page > totalBundles) page = totalBundles;
+            currentHistoryBundle = page;
+            renderBoardTable(window.__historyFilteredItems || []);
+            const scrollBox = document.getElementById('boardScrollBox');
+            if (scrollBox) scrollBox.scrollTop = 0;
+        }
+
+        function renderBoardTable(items) {
+            window.__historyFilteredItems = items || [];
+            const container = document.getElementById('boardTableContainer');
+            const emptyState = document.getElementById('emptyState');
+            const tbody = document.getElementById('boardTableBody');
+
+            if (!items || items.length === 0) {
+                if (container) container.classList.add('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (container) container.classList.remove('hidden');
+
+            const totalCount = items.length;
+            const totalBundles = Math.ceil(totalCount / HISTORY_BUNDLE_SIZE) || 1;
+            if (currentHistoryBundle > totalBundles) currentHistoryBundle = totalBundles;
+            if (currentHistoryBundle < 1) currentHistoryBundle = 1;
+
+            const startIdx = (currentHistoryBundle - 1) * HISTORY_BUNDLE_SIZE;
+            const endIdx = Math.min(startIdx + HISTORY_BUNDLE_SIZE, totalCount);
+            const pageItems = items.slice(startIdx, endIdx);
+
+            if (tbody) {
+                tbody.innerHTML = pageItems.map((item, i) => {
+                    const rowNum = startIdx + i + 1;
+                    const isCompleted = (item.status === '완료');
+                    const workTitle = item.workTitle || item.fileName || '작업계획서';
+                    const workDate = item.workDate || getYMD(item.createdAt) || '-';
+                    const timeStr = formatTimeOnly(item.createdAt);
+                    const teamName = item.teamName || '생산1부';
+                    const signerCount = item.signerCount || 0;
+                    const signersInfo = signerCount 
+                        ? (item.signerName ? `${escapeHtml(item.signerName)}${signerCount > 1 ? ` 외 ${signerCount - 1}명` : ''}` : `${signerCount}명 완료`)
+                        : '미서명';
+
+                    return `
+                        <tr onclick="openDetail('${item.id}')" class="hover:bg-emerald-50/60 transition-colors cursor-pointer group border-b border-slate-100 last:border-b-0">
+                            <!-- 1. No -->
+                            <td class="py-3 px-3 text-center text-slate-400 font-mono text-[11px] font-bold select-none">
+                                ${rowNum}
+                            </td>
+                            <!-- 2. 작업일시 -->
+                            <td class="py-3 px-3 text-center font-mono text-xs text-slate-600 whitespace-nowrap">
+                                <span class="font-bold text-slate-800">${escapeHtml(workDate)}</span>
+                                <span class="text-slate-400 text-[10px] block mt-0.5">${timeStr}</span>
+                            </td>
+                            <!-- 3. 부서 -->
+                            <td class="py-3 px-3 text-center whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-3xs">
+                                    ${escapeHtml(teamName)}
+                                </span>
+                            </td>
+                            <!-- 4. 작업명 / 안전공정 -->
+                            <td class="py-3 px-4 min-w-[240px] text-slate-800 truncate max-w-[340px] sm:max-w-[460px]" title="${escapeHtml(workTitle)}">
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <span class="text-emerald-600 font-bold shrink-0 text-sm">📋</span>
+                                    <span class="truncate font-bold text-xs text-slate-900 group-hover:text-emerald-900">${escapeHtml(workTitle)}</span>
+                                </div>
+                                ${item.chemicalProcess ? `<span class="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 mt-1 inline-block truncate max-w-[260px] font-medium">⚠️ 공정: ${escapeHtml(item.chemicalProcess)}</span>` : ''}
+                            </td>
+                            <!-- 5. ✍️ 전자서명 현황 & 명부 -->
+                            <td class="py-3 px-4 text-center whitespace-nowrap bg-emerald-50/30">
+                                ${isCompleted ? `
+                                    <div class="flex flex-col items-center justify-center gap-1">
+                                        <button type="button" onclick="event.stopPropagation(); openDetail('${item.id}')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 shadow-2xs transition-all cursor-pointer" title="자필 서명 명부 확인">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                            <span>✅ 서명완료 (${signerCount}명)</span>
+                                        </button>
+                                        <div class="text-[11px] text-slate-500 font-medium truncate max-w-[170px]" title="${escapeHtml(signersInfo)}">
+                                            ✍️ ${escapeHtml(signersInfo)}
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                            <span>⏳ 서명 대기</span>
+                                        </span>
+                                        <button type="button" onclick="event.stopPropagation(); openQrModal('${item.id}', '${item.briefingUrl}', '${escapeHtml(workTitle)}')" class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-3xs" title="현장 서명용 QR 띄우기">
+                                            <span>📱</span>
+                                            <span>서명받기</span>
+                                        </button>
+                                    </div>
+                                `}
+                            </td>
+                            <!-- 6. 정본 TBM일지 -->
+                            <td class="py-3 px-3 text-center whitespace-nowrap">
+                                <button type="button" onclick="event.stopPropagation(); openTbmPdf('${item.id}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow-sm shadow-rose-600/20 transition-all inline-flex items-center gap-1.5 cursor-pointer" title="전자서명 날인된 TBM일지 PDF 즉시 열람">
+                                    <span>📄</span>
+                                    <span>TBM일지</span>
+                                </button>
+                            </td>
+                            <!-- 7. 관리 (QR, 원본 엑셀, 삭제) -->
+                            <td class="py-3 px-3 text-center whitespace-nowrap">
+                                <div class="flex items-center justify-center gap-1">
+                                    <button type="button" onclick="event.stopPropagation(); openQrModal('${item.id}', '${item.briefingUrl}', '${escapeHtml(workTitle)}')" class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer" title="모바일 서명 QR 코드">
+                                        📱
+                                    </button>
+                                    <button type="button" onclick="event.stopPropagation(); blobDownloadFile('/api/sessions/${item.id}/workplan', '${escapeHtml(workTitle)}_TBM.xlsx', this)" class="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer" title="QR 포함 엑셀 작업계획서 다운로드">
+                                        📥
+                                    </button>
+                                    <button type="button" onclick="event.stopPropagation(); deleteSessionItem('${item.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="이력 삭제">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            renderHistoryBundleButtons(totalCount, currentHistoryBundle);
+        }
+
+        function renderHistoryBundleButtons(totalCount, currentBundle) {
+            const bottomBar = document.getElementById('boardBundleButtonsBottom');
+            const rangeInfo = document.getElementById('boardRangeInfo');
+
+            if (!totalCount || totalCount <= 0) {
+                if (bottomBar) bottomBar.innerHTML = '';
+                if (rangeInfo) rangeInfo.textContent = '0건';
+                return;
+            }
+
+            const totalBundles = Math.ceil(totalCount / HISTORY_BUNDLE_SIZE) || 1;
+            const startIdx = (currentBundle - 1) * HISTORY_BUNDLE_SIZE + 1;
+            const endIdx = Math.min(currentBundle * HISTORY_BUNDLE_SIZE, totalCount);
+
+            if (rangeInfo) {
+                rangeInfo.innerHTML = `전체 <strong class="text-slate-800">${totalCount}건</strong> 중 <strong class="text-emerald-700">${startIdx}~${endIdx}건</strong> 표시 중 <span class="text-slate-400">(${currentBundle}/${totalBundles} 묶음)</span>`;
+            }
+
+            if (totalBundles <= 1) {
+                if (bottomBar) bottomBar.innerHTML = '';
+                return;
+            }
+
+            let buttonsHtml = '';
+            const prevDisabled = currentBundle <= 1 ? 'disabled opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 active:scale-95 cursor-pointer';
+            buttonsHtml += `
+                <button type="button" onclick="setHistoryBundle(${currentBundle - 1})" ${currentBundle <= 1 ? 'disabled' : ''} class="px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 ${prevDisabled}" title="이전 50건">
+                    ◀ 이전
+                </button>
+            `;
+
+            for (let b = 1; b <= totalBundles; b++) {
+                const bStart = (b - 1) * HISTORY_BUNDLE_SIZE + 1;
+                const bEnd = Math.min(b * HISTORY_BUNDLE_SIZE, totalCount);
+                const isActive = (b === currentBundle);
+                const activeCls = isActive 
+                    ? 'bg-indigo-600 text-white font-black border-indigo-600 shadow-xs' 
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 font-semibold cursor-pointer';
+
+                buttonsHtml += `
+                    <button type="button" onclick="setHistoryBundle(${b})" class="px-2.5 py-1 text-xs rounded-lg border transition-all ${activeCls}">
+                        ${b}묶음 (${bStart}~${bEnd})
+                    </button>
+                `;
+            }
+
+            const nextDisabled = currentBundle >= totalBundles ? 'disabled opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 active:scale-95 cursor-pointer';
+            buttonsHtml += `
+                <button type="button" onclick="setHistoryBundle(${currentBundle + 1})" ${currentBundle >= totalBundles ? 'disabled' : ''} class="px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-700 ${nextDisabled}" title="다음 50건">
+                    다음 ▶
+                </button>
+            `;
+
+            if (bottomBar) bottomBar.innerHTML = buttonsHtml;
+        }
+
+        function updateStats() {
+            const total = allSessions.length;
+            const todayStr = getTodayYMD();
+            const todayCount = allSessions.filter(s => getYMD(s.createdAt) === todayStr).length;
+            const completedList = allSessions.filter(s => s.status === '완료');
+            const pendingList = allSessions.filter(s => s.status !== '완료');
+
+            const totalSigners = allSessions.reduce((acc, cur) => acc + (cur.signerCount || 0), 0);
+            const signRate = total > 0 ? Math.round((completedList.length / total) * 100) : 0;
+
+            const rateEl = document.getElementById('statSignRate');
+            if (rateEl) rateEl.innerText = `${signRate}%`;
+
+            const rateDetailEl = document.getElementById('statRateDetail');
+            if (rateDetailEl) rateDetailEl.innerText = `총 ${total}건 중 ${completedList.length}건 서명완료`;
+
+            const statTotalEl = document.getElementById('statTotal');
+            if (statTotalEl) statTotalEl.innerText = total;
+
+            const statTodayEl = document.getElementById('statToday');
+            if (statTodayEl) statTodayEl.innerText = todayCount;
+
+            const statPendingEl = document.getElementById('statPending');
+            if (statPendingEl) statPendingEl.innerText = pendingList.length;
+
+            const statCompletedEl = document.getElementById('statCompleted');
+            if (statCompletedEl) statCompletedEl.innerText = completedList.length;
+
+            const statSignersEl = document.getElementById('statSigners');
+            if (statSignersEl) statSignersEl.innerText = `(서명 ${totalSigners}명)`;
+
+            const badgeAll = document.getElementById('countBadgeAll');
+            if (badgeAll) badgeAll.innerText = `(${total})`;
+
+            const badgePending = document.getElementById('countBadgePending');
+            if (badgePending) badgePending.innerText = `(${pendingList.length})`;
+
+            const badgeCompleted = document.getElementById('countBadgeCompleted');
+            if (badgeCompleted) badgeCompleted.innerText = `(${completedList.length})`;
+        }
+
+
+        // ── 상세 모달 열기 ──
+        async function openDetail(id) {
+            try {
+                const res = await fetch(`/api/sessions/${id}`);
+                if (!res.ok) throw new Error('세션 상세 정보를 불러오지 못했습니다.');
+                const data = await res.json();
+
+                const isCompleted = (data.status === '완료');
+                const badge = document.getElementById('modalStatusBadge');
+                if (isCompleted) {
+                    badge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    badge.innerText = '✅ 서명 완료';
+                } else {
+                    badge.className = 'text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200';
+                    badge.innerText = '⏳ 현장 서명 대기중';
+                }
+
+                const modalTeam = document.getElementById('modalTeamBadge');
+                if (modalTeam) {
+                    if (data.teamName) {
+                        modalTeam.textContent = `🏢 ${data.teamName}`;
+                        modalTeam.classList.remove('hidden');
+                    } else {
+                        modalTeam.textContent = '';
+                        modalTeam.classList.add('hidden');
+                    }
+                }
+
+                document.getElementById('modalTime').innerText = formatDateTime(data.createdAt);
+                document.getElementById('modalWorkTitle').innerText = data.workTitle || data.fileName || '작업계획서';
+                document.getElementById('modalWorkDate').innerText = data.workDate ? `작업 일시: ${data.workDate}` : '';
+                document.getElementById('modalFolderName').innerText = data.folderName || data.id;
+
+                // 음성 낭독 초기화
+                stopModalTts();
+                const audioSection = document.getElementById('modalAudioSection');
+                if (data.script) {
+                    audioSection.classList.remove('hidden');
+                } else {
+                    audioSection.classList.add('hidden');
+                }
+
+                // 특보 & 화학물질 경고 박스
+                const alertBox = document.getElementById('modalAlertBox');
+                let alertHtml = '';
+                if (data.weatherAlert) {
+                    alertHtml += `
+                        <div class="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200/90 flex items-start gap-2.5 shadow-xs">
+                            <span class="text-amber-600 font-bold text-base leading-none">🚨</span>
+                            <div>
+                                <p class="text-xs font-bold text-amber-900">기상 특보 안내</p>
+                                <p class="text-xs text-amber-800 mt-0.5">${escapeHtml(data.weatherAlert)}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (data.chemicalHazard) {
+                    alertHtml += `
+                        <div class="p-3.5 rounded-xl bg-rose-50/90 border border-rose-200/90 flex items-start gap-2.5 shadow-xs">
+                            <span class="text-rose-600 font-bold text-base leading-none">☣️</span>
+                            <div>
+                                <p class="text-xs font-bold text-rose-900">화학물질 인체 노출 위험성 ${data.chemicalProcess ? `(${escapeHtml(data.chemicalProcess)})` : ''}</p>
+                                <p class="text-xs text-rose-800 mt-0.5 leading-relaxed">${escapeHtml(data.chemicalHazard)}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                alertBox.innerHTML = alertHtml;
+
+                // 핵심 포인트
+                const pointsList = document.getElementById('modalKeyPoints');
+                pointsList.innerHTML = (data.points || []).map(p => `
+                    <li class="flex items-start gap-2 text-xs text-slate-700 font-medium">
+                        <span class="text-emerald-600 font-bold">•</span>
+                        <span>${escapeHtml(p)}</span>
+                    </li>
+                `).join('') || '<li class="text-xs text-slate-400">등록된 핵심 포인트가 없습니다.</li>';
+
+                // 대본 본문
+                document.getElementById('modalScript').innerText = data.script || '작성된 대본이 없습니다.';
+
+                // 서명 갤러리 및 상태 표시
+                const sigContainer = document.getElementById('modalSignaturesList');
+                const sigCountBadge = document.getElementById('modalSignerCountBadge');
+                const sigNotice = document.getElementById('modalSignerStateNotice');
+                const sigs = data.signatures || [];
+                
+                if (sigCountBadge) {
+                    sigCountBadge.innerText = `${sigs.length}명 서명 완료`;
+                    sigCountBadge.className = isCompleted 
+                        ? 'text-xs text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300' 
+                        : 'text-xs text-amber-900 font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300';
+                }
+                if (sigNotice) {
+                    sigNotice.innerHTML = isCompleted 
+                        ? '<span class="text-emerald-700 font-bold">✅ 전원 서명 확인됨 (TBM일지 정본 열람 가능)</span>' 
+                        : '<span class="text-amber-700 font-bold animate-pulse">⏳ 현장 작업자 서명 진행중</span>';
+                }
+
+                if (sigs.length === 0) {
+                    sigContainer.innerHTML = `
+                        <div class="col-span-full p-8 rounded-2xl bg-amber-50/60 border border-dashed border-amber-300 text-center text-xs text-amber-900 space-y-1">
+                            <span class="text-2xl block mb-1">⏳</span>
+                            <p class="font-bold text-sm">아직 등록된 작업자 서명이 없습니다.</p>
+                            <p class="text-[11px] text-amber-700">현장 작업자에게 모바일 서명용 QR 코드를 제시하여 전자서명을 수집해 주세요.</p>
+                        </div>
+                    `;
+                } else {
+                    sigContainer.innerHTML = sigs.map((s, idx) => `
+                        <div class="p-3.5 rounded-xl bg-white/95 border border-emerald-200/90 flex items-center justify-between gap-3 shadow-xs hover:border-emerald-400 transition-colors">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] text-emerald-800 bg-emerald-100 font-mono font-bold px-1.5 py-0.2 rounded">#${idx + 1}</span>
+                                    <h4 class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(s.name)}</h4>
+                                </div>
+                                <p class="text-[10px] text-slate-500 font-medium mt-1">서명시각: ${formatDateTime(s.signedAt)}</p>
+                            </div>
+                            ${s.imageDataUrl ? `
+                                <div class="bg-slate-50 rounded-lg p-1 border border-slate-200 shrink-0 shadow-2xs">
+                                    <img src="${s.imageDataUrl}" alt="${escapeHtml(s.name)} 서명" class="h-12 w-24 object-contain bg-white rounded">
+                                </div>
+                            ` : '<span class="text-[11px] font-bold text-emerald-700 px-2 py-1 bg-emerald-50 rounded border border-emerald-200">서명완료</span>'}
+                        </div>
+                    `).join('');
+                }
+
+                // 버튼 연결
+                currentDetailData = data;
+
+                const downloadBtn = document.getElementById('modalDownloadBtn');
+                downloadBtn.onclick = () => {
+                    blobDownloadFile(
+                        `/api/sessions/${data.id}/workplan`,
+                        `${data.workTitle || data.fileName || '작업계획서'}_TBM.xlsx`,
+                        downloadBtn
+                    );
+                };
+
+                const cleanTitle = (data.workTitle || data.fileName || 'TBM작업계획서').replace(/[\\/:*?"<>|]/g, '_').trim();
+                const pdfHref = `/api/sessions/${data.id}/pdf`;
+                const pdfFilename = `${cleanTitle}_TBM_일지.pdf`;
+
+                const signerCount = (data.signatures || []).length;
+                const pdfBtn = document.getElementById('modalPdfBtn');
+                const headerPdfBtn = document.getElementById('modalHeaderPdfBtn');
+
+                if (pdfBtn) {
+                    pdfBtn.href = `/api/sessions/${data.id}/pdf`;
+                    pdfBtn.target = '_blank';
+                    pdfBtn.onclick = null;
+                    pdfBtn.className = 'px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm shadow-rose-600/20 cursor-pointer';
+                    pdfBtn.innerHTML = `
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <span>TBM일지 보기 ${signerCount > 0 ? `(${signerCount}명 서명 완료)` : ''}</span>
+                    `;
+                }
+                if (headerPdfBtn) {
+                    headerPdfBtn.onclick = () => window.open(`/api/sessions/${data.id}/pdf`, '_blank');
+                    headerPdfBtn.title = 'TBM일지 PDF 열람';
+                    headerPdfBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                const revertBtn = document.getElementById('modalRevertBtn');
+                if (isCompleted) {
+                    revertBtn.classList.remove('hidden');
+                    revertBtn.onclick = () => handleRevert(data.id);
+                } else {
+                    revertBtn.classList.add('hidden');
+                }
+
+                const deleteBtn = document.getElementById('modalDeleteBtn');
+                deleteBtn.onclick = () => {
+                    closeDetailModal();
+                    promptDelete(data.id, data.workTitle || data.fileName, formatDateTime(data.createdAt));
+                };
+
+                document.getElementById('detailModal').classList.remove('hidden');
+            } catch (err) {
+                showToastMessage(err.message, 'error');
+            }
+        }
+
+        let modalSpeaking = false;
+        function stopModalTts() {
+            modalSpeaking = false;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            const btn = document.getElementById('modalTtsBtn');
+            if (btn) btn.innerHTML = '<span>🔊</span><span>대본 읽기</span>';
+        }
+
+        function toggleModalTts() {
+            if (modalSpeaking) {
+                stopModalTts();
+                return;
+            }
+            const text = currentDetailData ? (currentDetailData.script || '') : '';
+            if (!text) return alert('읽을 대본이 없습니다.');
+            if (!('speechSynthesis' in window)) return alert('현재 브라우저가 음성 합성을 지원하지 않습니다.');
+
+            const chunks = text.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+            let index = 0;
+            modalSpeaking = true;
+            const btn = document.getElementById('modalTtsBtn');
+            if (btn) btn.innerHTML = '<span>⏹️</span><span>낭독 중지</span>';
+
+            const speakNext = () => {
+                if (!modalSpeaking || index >= chunks.length) {
+                    stopModalTts();
+                    return;
+                }
+                const utter = new SpeechSynthesisUtterance(chunks[index]);
+                utter.lang = 'ko-KR';
+                utter.pitch = 0.85;
+                utter.rate = 1.05;
+                utter.onend = () => { index += 1; speakNext(); };
+                utter.onerror = () => stopModalTts();
+                window.speechSynthesis.speak(utter);
+            };
+
+            window.speechSynthesis.cancel();
+            speakNext();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            stopModalTts();
+        }
+
+        // 낭독 대본의 가독성을 위해 문장 구분 및 수칙별 줄바꿈/불릿을 정돈
+        function formatScriptHtml(script) {
+            if (!script) return '작성된 대본이 없습니다.';
+            let text = String(script).trim();
+            
+            // 수칙 번호 분리 ("첫째,", "둘째,", "셋째," 등)
+            if (!text.includes('\n')) {
+                text = text.replace(/([.!?])\s*(첫째[,\s]|둘째[,\s]|셋째[,\s]|넷째[,\s]|다섯째[,\s]|1\.|2\.|3\.)/g, '$1\n$2');
+                text = text.replace(/(TBM입니다\.|반갑습니다\.|안전 브리핑입니다\.)\s*/g, '$1\n\n');
+            }
+
+            const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+            return lines.map(line => {
+                if (/^(첫째|둘째|셋째|넷째|다섯째|[1-9]\.)/.test(line)) {
+                    return `<div class="script-rule-item"><span class="script-bullet">🔸</span><span>${escapeHtml(line)}</span></div>`;
+                }
+                return `<div class="script-para">${escapeHtml(line)}</div>`;
+            }).join('');
+        }
+
+        // TBM 실시 시각: 서명이 최초로 들어온 시각을 반환 (서명 없으면 null)
+        function getFirstSignatureTime(data) {
+            const sigs = data && Array.isArray(data.signatures) ? data.signatures : [];
+            if (sigs.length === 0) return null;
+
+            const timestamps = sigs
+                .map(s => s && s.signedAt)
+                .filter(Boolean)
+                .map(t => new Date(t))
+                .filter(d => !isNaN(d.getTime()));
+
+            if (timestamps.length > 0) {
+                timestamps.sort((a, b) => a.getTime() - b.getTime());
+                return timestamps[0];
+            }
+
+            if (data.completedAt) {
+                const d = new Date(data.completedAt);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            return null;
+        }
+
+        // ── A4 공식 인쇄 및 PDF용 공문서 템플릿 렌더링 (단일 1페이지 일체형) ──
+        function renderPrintTemplate(data) {
+            const printArea = document.getElementById('tbmPrintArea');
+            if (!printArea) return;
+
+            const workTitle = data.workTitle || data.fileName || '작업계획서';
+            const workDate = data.workDate || '-';
+            
+            // TBM 실시 시각: 최초 서명 시각, 서명이 아직 없으면 공란
+            const firstSigTime = getFirstSignatureTime(data);
+            const tbmTimeStr = firstSigTime ? formatDateTime(firstSigTime) : '';
+
+            const isCompleted = (data.status === '완료');
+            const sigs = data.signatures || [];
+            const printTimeStr = new Date().toLocaleString('ko-KR');
+
+            let html = `
+                <!-- 단일 1페이지 A4 TBM일지 -->
+                <div class="a4-print-sheet">
+                    <!-- 1. 공문서 공식 헤더 -->
+                    <div class="print-header">
+                        <div class="print-header-left">
+                            <img src="./logo.png" alt="금호미쓰이화학" class="print-logo" onerror="this.style.display='none'">
+                        </div>
+                        
+                        <div class="print-header-center">
+                            <h1 class="print-main-title">TBM일지</h1>
+                        </div>
+
+                        <div class="print-header-right">
+                            <span class="print-status-tag ${isCompleted ? 'status-completed' : 'status-pending'}">
+                                ${isCompleted ? '✅ 전원 서명 완료' : '⏳ 현장 서명 진행중'}
+                            </span>
+                            ${tbmTimeStr ? `<div class="print-sub-title">실시: ${tbmTimeStr}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- 2. 기본 작업 정보 표 -->
+                    <table class="print-info-table">
+                        <colgroup>
+                            <col style="width: 14%;">
+                            <col style="width: 36%;">
+                            <col style="width: 14%;">
+                            <col style="width: 36%;">
+                        </colgroup>
+                        <tbody>
+                            <tr>
+                                <th>작 업 명</th>
+                                <td colspan="3" style="font-weight: 800; font-size: 12.5px; color: #0f172a;">${escapeHtml(workTitle)}</td>
+                            </tr>
+                            <tr>
+                                <th>작업 일시</th>
+                                <td>${escapeHtml(workDate)}</td>
+                                <th>TBM 실시 시각</th>
+                                <td>${tbmTimeStr ? escapeHtml(tbmTimeStr) : ''}</td>
+                            </tr>
+                            <tr>
+                                <th>공정 / 설비</th>
+                                <td>${data.chemicalProcess ? escapeHtml(data.chemicalProcess) : '일반 설비 및 배관'}</td>
+                                <th>취급 화학물질</th>
+                                <td>${data.chemicals ? escapeHtml(data.chemicals) : (data.chemicalHazard ? '유해화학물질 취급' : '해당 없음')}</td>
+                            </tr>
+                            <tr>
+                                <th>참석 서명 인원</th>
+                                <td>
+                                    <strong style="color: #047857;">총 ${sigs.length}명</strong> (${isCompleted ? '전자 서명 완료' : '서명 진행 중'})
+                                </td>
+                                <th>진행 상태</th>
+                                <td>
+                                    <span class="print-status-tag ${isCompleted ? 'status-completed' : 'status-pending'}">
+                                        ${isCompleted ? '✅ 전원 서명 완료' : '⏳ 현장 서명 진행중'}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 3. 환경·기상 특보 & 화학물질 위험성 안내 (있을 경우만 표시) -->
+                    ${(data.weatherAlert || data.weather) ? `
+                        <div class="print-section-box">
+                            <div class="section-badge badge-amber">🚨 당일 현장 기상 상황 및 특보 안내</div>
+                            <div class="section-content">
+                                ${data.weatherAlert ? `<div class="weather-alert-text"><strong>[특보 발효]</strong> ${escapeHtml(data.weatherAlert)}</div>` : ''}
+                                ${data.weather ? `<div class="weather-sub-text">현장 기상: ${escapeHtml(data.weather)}</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${data.chemicalHazard ? `
+                        <div class="print-section-box">
+                            <div class="section-badge badge-rose">☣️ 유해 화학물질 위험성 및 비상조치 요령 ${data.chemicalProcess ? `(${escapeHtml(data.chemicalProcess)})` : ''}</div>
+                            <div class="section-content hazard-text">${escapeHtml(data.chemicalHazard)}</div>
+                        </div>
+                    ` : ''}
+
+                    <!-- 4. 핵심 안전 수칙 -->
+                    <div class="print-section-box">
+                        <div class="section-badge badge-green">🛡️ 작업 전 핵심 중점 안전 수칙</div>
+                        <div class="section-content">
+                            <ul class="print-rules-list">
+                                ${(data.points && data.points.length > 0) ? data.points.map(p => `
+                                    <li><span class="rule-bullet">✔</span> <strong>${escapeHtml(p)}</strong></li>
+                                `).join('') : '<li>등록된 핵심 안전 수칙이 없습니다.</li>'}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 5. 현장 TBM 문구 -->
+                    <div class="print-section-box script-box">
+                        <div class="section-badge badge-slate">📢 현장 TBM 문구</div>
+                        <div class="section-content script-text">${formatScriptHtml(data.script)}</div>
+                    </div>
+
+                    <!-- 6. 현장 TBM 작업 참석자 서명부 (최대 20명 수용, 4열 x 5행 일체형) -->
+                    <div class="print-section-box roster-box">
+                        <div class="section-badge badge-slate" style="justify-content: space-between;">
+                            <span>✍️ 현장 TBM 작업 참석자 전자 서명 명부 (자필 서명 확인)</span>
+                            <span style="font-size: 9.5px; font-weight: normal; color: #475569;">총 ${sigs.length}명 참여 / 최대 20인 수용</span>
+                        </div>
+                        <div style="padding: 2px 2px 1px 2px;">
+                            <table class="print-roster-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 3.5%;">No</th>
+                                        <th style="width: 7.5%;">성명</th>
+                                        <th style="width: 14%;">서명(인)</th>
+                                        <th style="width: 3.5%;">No</th>
+                                        <th style="width: 7.5%;">성명</th>
+                                        <th style="width: 14%;">서명(인)</th>
+                                        <th style="width: 3.5%;">No</th>
+                                        <th style="width: 7.5%;">성명</th>
+                                        <th style="width: 14%;">서명(인)</th>
+                                        <th style="width: 3.5%;">No</th>
+                                        <th style="width: 7.5%;">성명</th>
+                                        <th style="width: 14%;">서명(인)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${render20SignaturesGrid(sigs)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 7. 1페이지 일체형 푸터 -->
+                    <div class="print-doc-footer">
+                        <div class="footer-legal-notice">
+                            ※ 본 문서는 산업안전보건법 제64조에 따라 작업 착수 전 현장 TBM 및 위험성 교육을 성실히 이수하고 작업자가 직접 자필 서명하였음을 기록한 1페이지 정본입니다.
+                        </div>
+                        <div class="footer-meta-row">
+                            <span>발급 시스템: 작업계획서&TBM Maker</span>
+                            <span>문서 출력 일시: ${printTimeStr} (1 / 1 페이지 정본)</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            printArea.innerHTML = html;
+        }
+
+        // 인쇄 직전: A4 인쇄 가능 높이(278mm)에 맞춰 내용 자동 보정 (서명란 31px 고정 유지 & 대본 글씨 자동 피팅)
+        function fitPrintSheetToPage() {
+            const area = document.getElementById('tbmPrintArea');
+            const sheet = area && area.querySelector('.a4-print-sheet');
+            if (!sheet) return;
+
+            // 화면에서는 숨김 상태이므로 인쇄 폭(186mm)으로 임시 표시하여 측정
+            const prev = area.getAttribute('style');
+            area.style.cssText = 'display:block;position:absolute;left:-9999px;top:0;width:186mm;visibility:hidden;';
+
+            const probe = document.createElement('div');
+            probe.style.cssText = 'position:absolute;visibility:hidden;width:1px;height:278mm;';
+            document.body.appendChild(probe);
+            const target = probe.offsetHeight - 12;
+            document.body.removeChild(probe);
+
+            const scriptEl = sheet.querySelector('.script-box .section-content');
+            if (scriptEl) {
+                // 1. 대본 글자 길이에 따른 적정 폰트 크기 및 줄간격 초기 배치 (240px 고정 칸 기준)
+                const textLen = (scriptEl.innerText || '').length;
+                let fs = 10.0;
+                let lh = 1.48;
+
+                if (textLen >= 1100) {
+                    fs = 9.2;
+                    lh = 1.40;
+                } else if (textLen >= 800) {
+                    fs = 10.0;
+                    lh = 1.48;
+                } else if (textLen >= 400) {
+                    fs = 11.0;
+                    lh = 1.58;
+                } else {
+                    fs = 11.8;
+                    lh = 1.65;
+                }
+
+                scriptEl.style.fontSize = fs + 'px';
+                scriptEl.style.lineHeight = lh;
+
+                // 2. 240px 고정 칸 높이(clientHeight) 및 전체 A4(target)를 초과할 경우 대본 글씨를 0.2px씩 미세 축소하여 100% 안착
+                while ((scriptEl.scrollHeight > scriptEl.clientHeight || sheet.offsetHeight > target) && fs > 7.5) {
+                    fs -= 0.2;
+                    scriptEl.style.fontSize = fs + 'px';
+                    if (fs <= 9.0) scriptEl.style.lineHeight = '1.38';
+                    if (fs <= 8.2) scriptEl.style.lineHeight = '1.32';
+                }
+            }
+
+            // 3. 미세 초과 시 박스 간격 미세 조정
+            if (sheet.offsetHeight > target) {
+                const boxes = sheet.querySelectorAll('.print-section-box');
+                boxes.forEach(b => { b.style.marginBottom = '5px'; });
+            }
+
+            if (prev === null) area.removeAttribute('style'); else area.setAttribute('style', prev);
+        }
+        window.addEventListener('beforeprint', fitPrintSheetToPage);
+
+        // ── 20인 서명 명부 4열 x 5행 컴팩트 렌더링 ──
+        function render20SignaturesGrid(sigs) {
+            let html = '';
+            const rowsCount = 5; // 5행
+            const colsCount = 4; // 4열 -> 총 20명 수용
+
+            for (let r = 0; r < rowsCount; r++) {
+                html += '<tr>';
+                for (let c = 0; c < colsCount; c++) {
+                    const idx = c * rowsCount + r;
+                    const num = idx + 1;
+                    const signer = (sigs && sigs[idx]) ? sigs[idx] : null;
+
+                    if (signer) {
+                        html += `
+                            <td class="roster-no">${num}</td>
+                            <td class="roster-name" title="${escapeHtml(signer.name)}">${escapeHtml(signer.name)}</td>
+                            <td class="roster-sig-cell">
+                                ${signer.imageDataUrl ? `<img src="${signer.imageDataUrl}" alt="서명" class="roster-sig-img">` : '<span class="roster-empty-cell">완료</span>'}
+                            </td>
+                        `;
+                    } else {
+                        html += `
+                            <td class="roster-no">${num}</td>
+                            <td class="roster-name"><span class="roster-empty-cell">-</span></td>
+                            <td class="roster-sig-cell"><span class="roster-placeholder">-</span></td>
+                        `;
+                    }
+                }
+                html += '</tr>';
+            }
+            return html;
+        }
+
+        function formatTimeShort(iso) {
+            if (!iso) return '-';
+            try {
+                const d = new Date(iso);
+                const h = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${h}:${min}`;
+            } catch {
+                return '-';
+            }
+        }
+
+        // ── 프린터 출력 핸들러 (A4 단일 1페이지 최적화) ──
+        async function handlePrint(id) {
+            try {
+                let data = currentDetailData;
+                if (id && (!data || data.id !== id)) {
+                    const res = await fetch(`/api/sessions/${id}`);
+                    if (!res.ok) throw new Error('세션 정보를 불러오지 못했습니다.');
+                    data = await res.json();
+                }
+                if (!data) {
+                    showToastMessage('출력할 TBM 데이터가 없습니다.', 'error');
+                    return;
+                }
+
+                // 1. A4 1페이지 최적 규격 양식 렌더링
+                renderPrintTemplate(data);
+
+                // 2. 인쇄 안내 토스트 알림
+                showToastMessage('🖨️ [프린터 출력] 연결된 프린터(용지 A4)를 확인하신 후 [인쇄]를 눌러주세요.', 'info');
+
+                // 3. 브라우저 인쇄 다이얼로그 호출
+                setTimeout(() => {
+                    window.print();
+                }, 180);
+            } catch (err) {
+                console.error('[프린터 출력 오류]', err);
+                showToastMessage('인쇄 준비 중 오류가 발생했습니다: ' + err.message, 'error');
+            }
+        }
+
+        // ── PDF 다운로드 실시간 진행 상태 위젯 및 브라우저 다운로드 트레이 연동 ──
+        let pdfWidgetTimer = null;
+
+        function showPdfDownloadProgress(workTitle) {
+            const widget = document.getElementById('pdfDownloadProgressWidget');
+            if (!widget) return;
+
+            if (pdfWidgetTimer) clearTimeout(pdfWidgetTimer);
+
+            const cleanTitle = (workTitle || 'TBM작업계획서').replace(/[\\/:*?"<>|]/g, '_').trim();
+            const filename = `${cleanTitle}_TBM_일지.pdf`;
+
+            const titleEl = document.getElementById('pdfWidgetTitle');
+            const percentEl = document.getElementById('pdfWidgetPercent');
+            const barEl = document.getElementById('pdfWidgetProgressBar');
+            const statusEl = document.getElementById('pdfWidgetStatusText');
+            const iconBox = document.getElementById('pdfWidgetIconBox');
+
+            if (titleEl) titleEl.innerText = filename;
+            if (percentEl) {
+                percentEl.innerText = '25%';
+                percentEl.className = 'text-xs font-black text-rose-600';
+            }
+            if (barEl) {
+                barEl.style.width = '25%';
+                barEl.className = 'h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-300';
+            }
+            if (statusEl) {
+                statusEl.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span> TBM일지 데이터 및 서명 확인 중...';
+            }
+            if (iconBox) {
+                iconBox.className = 'w-9 h-9 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center shrink-0';
+                iconBox.innerHTML = `
+                    <svg class="w-5 h-5 text-rose-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                `;
+            }
+
+            widget.classList.remove('hidden');
+
+            // 1단계: 브라우저 다운로드 트레이로 스트림 전송
+            setTimeout(() => {
+                if (percentEl) percentEl.innerText = '70%';
+                if (barEl) barEl.style.width = '70%';
+                if (statusEl) {
+                    statusEl.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span> 브라우저 다운로드(↓)로 TBM일지 전송 중...';
+                }
+            }, 350);
+
+            // 2단계: 완료 상태 및 우측 상단 트레이 확인 안내
+            setTimeout(() => {
+                if (percentEl) {
+                    percentEl.innerText = '100%';
+                    percentEl.className = 'text-xs font-black text-emerald-600';
+                }
+                if (barEl) {
+                    barEl.style.width = '100%';
+                    barEl.className = 'h-full bg-emerald-500 rounded-full transition-all duration-300';
+                }
+                if (statusEl) {
+                    statusEl.innerHTML = '<span class="text-emerald-600 font-bold">✓ TBM일지 다운로드 완료!</span>';
+                }
+                if (iconBox) {
+                    iconBox.className = 'w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center shrink-0';
+                    iconBox.innerHTML = `
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    `;
+                }
+
+                pdfWidgetTimer = setTimeout(() => {
+                    closePdfDownloadWidget();
+                }, 4000);
+            }, 1000);
+        }
+
+        function closePdfDownloadWidget() {
+            const widget = document.getElementById('pdfDownloadProgressWidget');
+            if (widget) widget.classList.add('hidden');
+        }
+
+        // ── TBM일지 완성본 보기 핸들러 (새 창 브라우저 뷰어 열람) ──
+        function openTbmPdf(id) {
+            if (!id) return;
+            window.open(`/api/sessions/${id}/pdf`, '_blank');
+        }
+        function viewPdfLog(id) {
+            openTbmPdf(id);
+        }
+
+        // ── 크롬/엣지/사내 보안 환경 완벽 호환 다운로드 (Blob + 네이티브 Direct Fallback) ──
+        async function blobDownloadFile(url, filename, btnEl) {
+            const originalHtml = btnEl ? btnEl.innerHTML : null;
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.classList.add('opacity-75');
+                btnEl.innerHTML = '<span class="animate-spin inline-block">⏳</span> 받는중...';
+            }
+
+            const triggerDirectDownload = (dlUrl) => {
+                const sep = dlUrl.includes('?') ? '&' : '?';
+                const cleanDlUrl = `${dlUrl}${sep}download=1&_t=${Date.now()}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = cleanDlUrl;
+                document.body.appendChild(iframe);
+                setTimeout(() => {
+                    if (document.body.contains(iframe)) document.body.removeChild(iframe);
+                }, 6000);
+            };
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`서버 응답 오류 (${res.status})`);
+                const blobData = await res.blob();
+                const octetBlob = new Blob([blobData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const blobUrl = window.URL.createObjectURL(octetBlob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 2000);
+            } catch (err) {
+                console.warn('[다운로드] 1차 Blob 다운로드 실패, 2차 직접 다운로드 폴백 가동:', err);
+                try {
+                    triggerDirectDownload(url);
+                } catch (fallbackErr) {
+                    console.error('[다운로드] 최종 실패:', fallbackErr);
+                    showToastMessage('파일 다운로드 중 오류가 발생했습니다: ' + err.message, 'error');
+                }
+            } finally {
+                if (btnEl && originalHtml) {
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('opacity-75');
+                        btnEl.innerHTML = originalHtml;
+                    }, 600);
+                }
+            }
+        }
+
+        // ── QR작업계획서 (.xlsx) 다운로드 핸들러 (Blob 방식) ──
+        function downloadWorkplanExcel(id, title) {
+            if (!id) return;
+            const filename = title ? `${title}_TBM.xlsx` : '작업계획서_TBM.xlsx';
+            blobDownloadFile(`/api/sessions/${id}/workplan`, filename, null);
+        }
+
+        async function handlePdfDownload(id) {
+            try {
+                const targetId = id || (currentDetailData && currentDetailData.id);
+                if (!targetId) {
+                    showToastMessage('열람할 TBM 데이터가 없습니다.', 'error');
+                    return;
+                }
+                showToastMessage('📄 TBM일지 문서를 엽니다.', 'info');
+                window.open(`/api/sessions/${targetId}/pdf`, '_blank');
+            } catch (err) {
+                console.error('[TBM일지 열람 오류]', err);
+                showToastMessage('TBM일지 열람 중 오류가 발생했습니다: ' + err.message, 'error');
+            }
+        }
+
+        // ── 서명 취소 처리 ──
+        async function handleRevert(id) {
+            if (!confirm('정말 서명 제출을 취소하고 대기 상태로 되돌리시겠습니까? 기존 서명이 초기화됩니다.')) return;
+            try {
+                const res = await fetch(`/api/sessions/${id}/cancel`, { method: 'POST' });
+                if (!res.ok) throw new Error('제출 취소에 실패했습니다.');
+                showToastMessage('서명 제출이 취소되어 대기 상태로 변경되었습니다.', 'info');
+                closeDetailModal();
+                await refreshData(false);
+            } catch (err) {
+                showToastMessage(err.message, 'error');
+            }
+        }
+
+        // ── QR 모달 열기 ──
+        function openQrModal(id) {
+            const url = `${publicHostBase}/m/${id}`;
+            document.getElementById('qrModalImg').src = `/api/sessions/${id}/qr.png`;
+            document.getElementById('qrModalLink').innerText = url;
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+
+        // ── 수동 삭제 로직 (DB와 실시간 1:1 완벽 일치) ──
+        function promptDelete(id, title, dateStr) {
+            deleteTargetId = id;
+            document.getElementById('deleteTargetTitle').innerText = title || '작업계획서';
+            document.getElementById('deleteTargetDate').innerText = `생성: ${dateStr}`;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            deleteTargetId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        async function executeDelete() {
+            if (!deleteTargetId) return;
+            const btn = document.getElementById('confirmDeleteBtn');
+            btn.disabled = true;
+            btn.innerText = '삭제 중...';
+
+            try {
+                const res = await fetch(`/api/sessions/${deleteTargetId}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || '삭제 실패');
+
+                showToastMessage('TBM 이력이 안전 저장소에서 영구 삭제되었습니다.', 'success');
+                closeDeleteModal();
+                // 즉시 최신 상태로 새로고침 (DB 100% 동기화)
+                await refreshData(false);
+            } catch (err) {
+                showToastMessage(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '영구 삭제';
+            }
+        }
+
+        // ── 전체 삭제 조작 ──
+        function promptDeleteAll() {
+            if (!allSessions || allSessions.length === 0) {
+                showToastMessage('삭제할 TBM 이력이 없습니다.', 'info');
+                return;
+            }
+            document.getElementById('deleteAllCountText').innerText = `${allSessions.length}건`;
+            const pwdInput = document.getElementById('historyDeletePassword');
+            if (pwdInput) pwdInput.value = '';
+            document.getElementById('deleteAllModal').classList.remove('hidden');
+            if (pwdInput) setTimeout(() => pwdInput.focus(), 100);
+        }
+
+        function closeDeleteAllModal() {
+            document.getElementById('deleteAllModal').classList.add('hidden');
+        }
+
+        async function executeDeleteAll() {
+            const pwdInput = document.getElementById('historyDeletePassword');
+            const pwd = pwdInput ? pwdInput.value.trim() : '';
+
+            if (pwd !== 'kmci5000') {
+                showToastMessage('관리자 비밀번호가 일치하지 않아 초기화할 수 없습니다.', 'error');
+                if (pwdInput) {
+                    pwdInput.select();
+                    pwdInput.focus();
+                }
+                return;
+            }
+
+            const btn = document.getElementById('confirmDeleteAllBtn');
+            btn.disabled = true;
+            btn.innerText = '삭제 중...';
+
+            try {
+                let res = await fetch('/api/sessions', { method: 'DELETE' });
+                // 서버가 구버전 프로세스라 DELETE /api/sessions가 404일 경우 개별 순차 삭제 폴백
+                if (res.status === 404 || res.status === 405) {
+                    const targets = [...allSessions];
+                    for (const s of targets) {
+                        await fetch(`/api/sessions/${s.id}`, { method: 'DELETE' });
+                    }
+                } else if (!res.ok) {
+                    const result = await res.json();
+                    throw new Error(result.error || '전체 삭제 실패');
+                }
+
+                showToastMessage('모든 TBM 이력과 파일이 완전히 삭제되었습니다.', 'success');
+                closeDeleteAllModal();
+                await refreshData(false);
+            } catch (err) {
+                showToastMessage(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '전체 영구 삭제';
+            }
+        }
+
+        // ── 필터 및 검색 조작 ──
+        function setFilter(filter) {
+            activeFilter = filter;
+            ['all', 'pending', 'completed'].forEach(f => {
+                const tab = document.getElementById('tab' + f.charAt(0).toUpperCase() + f.slice(1));
+                if (!tab) return;
+                if (f === filter) {
+                    if (f === 'pending') {
+                        tab.className = 'filter-tab px-3.5 py-2 rounded-lg text-xs font-bold transition-all bg-amber-500 text-white shadow-sm shadow-amber-500/20 cursor-pointer';
+                    } else {
+                        tab.className = 'filter-tab px-3.5 py-2 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 cursor-pointer';
+                    }
+                } else {
+                    tab.className = 'filter-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all cursor-pointer';
+                }
+            });
+            renderDashboard();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val;
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (val.trim()) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+            renderDashboard();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            handleSearch('');
+        }
+
+        function toggleSort() {
+            sortDesc = !sortDesc;
+            document.getElementById('sortLabel').innerText = sortDesc ? '최신순 ↓' : '오래된순 ↑';
+            renderDashboard();
+        }
+
+        // ── 날짜 유틸리티 ──
+        function getTodayYMD() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function getYMD(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatTimeOnly(iso) {
+            if (!iso) return '-';
+            try {
+                const d = new Date(iso);
+                return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            } catch {
+                return iso;
+            }
+        }
+
+        function formatDateTime(iso) {
+            if (!iso) return '-';
+            try {
+                const d = new Date(iso);
+                return d.toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' });
+            } catch {
+                return iso;
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function escapeJs(value) {
+            return String(value || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"');
+        }
+
+        // ── 토스트 알림 ──
+        function showToastMessage(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-2xl text-xs font-semibold shadow-xl flex items-center gap-2 pointer-events-auto animate-fade-in border ${
+                type === 'success' ? 'bg-white text-emerald-800 border-emerald-200 shadow-emerald-600/10' :
+                type === 'error' ? 'bg-white text-rose-800 border-rose-200 shadow-rose-600/10' :
+                'bg-white text-slate-800 border-slate-200 shadow-slate-600/10'
+            }`;
+
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+            toast.innerHTML = `<span class="font-black text-sm">${icon}</span> <span>${escapeHtml(msg)}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

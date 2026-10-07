@@ -1,0 +1,2147 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3단계 TBM Maker - 금호미쓰이화학(KMCI)</title>
+    <meta name="description" content="TBM Maker - 접수된 작업계획서부터 TBM 일지 생성 및 QR 작업계획서 배포까지 원스톱 3단계 프로세스">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        safety: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f6f8fb;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        /* Ambient Pastel Aurora Glows */
+        .aurora-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .aurora-blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.65;
+            border-radius: 9999px;
+            animation: auroraFloat 18s ease-in-out infinite alternate;
+        }
+        .blob-1 {
+            top: -10%;
+            left: 15%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(167, 243, 208, 0.6) 0%, rgba(110, 231, 183, 0.25) 60%, transparent 80%);
+        }
+        .blob-2 {
+            top: 25%;
+            right: -5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(186, 230, 253, 0.65) 0%, rgba(125, 211, 252, 0.25) 60%, transparent 80%);
+            animation-delay: -5s;
+        }
+        .blob-3 {
+            bottom: -10%;
+            left: 20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(204, 251, 241, 0.6) 0%, rgba(153, 246, 228, 0.2) 60%, transparent 80%);
+            animation-delay: -10s;
+        }
+        @keyframes auroraFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -25px) scale(1.08); }
+            100% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* Soft Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 16px 36px -6px rgba(16, 185, 129, 0.08), 0 6px 16px -2px rgba(15, 23, 42, 0.03);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden bg-[#f0fdf4] text-slate-800 flex flex-col">
+    <!-- ── 파스텔 연두 배경 ── -->
+    <div class="aurora-bg">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2"></div>
+        <div class="aurora-blob blob-3"></div>
+    </div>
+
+    <!-- ── 1. 상단 글로벌 네비게이션 & 파이프라인 ── -->
+    <header class="w-full relative z-30 border-b border-emerald-200/80 bg-white/95 backdrop-blur-md sticky top-0 shadow-xs">
+        <!-- 1단: 브랜드 로고 & 타이틀 -->
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 shrink-0 z-10">
+                <a href="./index.html" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 transition-all cursor-pointer border border-slate-200" title="워크플로 허브로 이동">
+                    <span>🏠</span>
+                    <span class="hidden sm:inline">메인 허브</span>
+                    <span class="sm:hidden">허브</span>
+                </a>
+                <div class="h-4 w-px bg-emerald-200 shrink-0"></div>
+                <a href="./index.html" class="flex items-center group cursor-pointer shrink-0" title="메인 순서도 허브로 이동">
+                    <img src="./logo.png" alt="금호미쓰이화학" class="h-5 sm:h-6 object-contain">
+                </a>
+            </div>
+
+            <!-- 상단 정가운데: 메인 타이틀 -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-auto">
+                <a href="./index.html" class="text-xl sm:text-2xl font-black text-slate-900 hover:text-emerald-700 tracking-tight transition-colors whitespace-nowrap" title="메인 순서도 허브로 이동">
+                    작업계획서&TBM Maker
+                </a>
+            </div>
+
+            <!-- 우측 보조 링크: TBM일지관리 바로가기 -->
+            <div class="flex items-center gap-2 z-10">
+                <a href="./history.html" id="topNavHistoryBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition-all cursor-pointer border border-emerald-200" title="TBM일지관리 열람">
+                    <span>✍️</span>
+                    <span class="hidden sm:inline">TBM일지관리</span>
+                    <span class="sm:hidden">일지</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2단: 작업 순서도 파이프라인 (Step 3: TBM Maker 활성) -->
+        <nav aria-label="작업 순서도" class="bg-gradient-to-r from-slate-50 via-emerald-50/30 to-slate-50 px-3 sm:px-6 py-2 overflow-x-auto scrollbar-thin border-b border-emerald-200/70">
+            <div id="flowNavContainer" class="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-[820px]">
+                <!-- Step 1: 표준 작업계획서 DB -->
+                <a href="./standard-workplan.html" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 부서별 표준 작업계획서 DB">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">부서별 표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 일일 작업계획서 Maker -->
+                <a href="./workplan-maker.html" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="2단계: 일일 작업계획서 Maker">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">표준서 기반 일일계획서</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: TBM Maker (현재 위치 활성화) -->
+                <div class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate">TBM Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">3단계 통합 TBM 파이프라인</p>
+                    </div>
+                </div>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM일지관리 -->
+                <a href="./history.html" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">TBM일지관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: 최종 작업계획서 관리 -->
+                <a href="./admin.html" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">최종 작업계획서 관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ── 메인 와이드 워크스페이스 ── -->
+    <main class="relative z-10 flex-1 p-3 sm:p-5 lg:p-6 space-y-4 max-w-[1720px] w-full mx-auto">
+
+        <!-- ── 상단 컨트롤 바 (소속 부서 선택 + 컴팩트 실시간 기상/안전 바) ── -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            
+            <!-- 부서 선택 드롭다운 -->
+            <div class="relative w-fit min-w-[220px]" id="teamDropdownContainer">
+                <button type="button" id="teamDropdownTrigger" onclick="toggleCustomTeamDropdown()" class="w-full flex items-center justify-between gap-3 bg-white/95 hover:bg-emerald-50/70 border-2 border-emerald-500 rounded-2xl px-4 py-2.5 shadow-xs hover:shadow-sm transition-all cursor-pointer group text-left">
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            현재 선택 부서
+                        </span>
+                        <span id="currentTeamDisplay" class="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight mt-0.5 group-hover:text-emerald-800 transition-colors">
+                            생산1부
+                        </span>
+                    </div>
+                    <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-3xs group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <svg id="teamDropdownArrow" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </button>
+
+                <!-- 드롭다운 메뉴 레이어 -->
+                <div id="teamDropdownMenu" class="hidden absolute top-[calc(100%+6px)] left-0 w-64 bg-white/95 backdrop-blur-xl border border-emerald-200/90 rounded-2xl shadow-xl p-2 z-50 space-y-1">
+                    <div class="px-3 py-1.5 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
+                        <span>소속 부서 변경</span>
+                        <span class="text-[10px] text-emerald-600 font-bold">5개 부서</span>
+                    </div>
+                    <div class="space-y-1 pt-1" id="teamOptionsList">
+                        <button type="button" onclick="selectCustomTeam('생산1부')" class="team-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-xs text-left cursor-pointer" data-team="생산1부">
+                            <span class="flex items-center gap-2">🏢 생산1부 (1공장)</span>
+                            <span class="team-check text-emerald-600 font-black hidden">✓</span>
+                        </button>
+                        <button type="button" onclick="selectCustomTeam('생산2부')" class="team-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-xs text-left cursor-pointer" data-team="생산2부">
+                            <span class="flex items-center gap-2">🏢 생산2부 (2공장)</span>
+                            <span class="team-check text-emerald-600 font-black hidden">✓</span>
+                        </button>
+                        <button type="button" onclick="selectCustomTeam('공무팀')" class="team-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-xs text-left cursor-pointer" data-team="공무팀">
+                            <span class="flex items-center gap-2">🔧 공무팀 (정비·계기)</span>
+                            <span class="team-check text-emerald-600 font-black hidden">✓</span>
+                        </button>
+                        <button type="button" onclick="selectCustomTeam('제품운영팀')" class="team-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-xs text-left cursor-pointer" data-team="제품운영팀">
+                            <span class="flex items-center gap-2">📦 제품운영팀 (출하·포장)</span>
+                            <span class="team-check text-emerald-600 font-black hidden">✓</span>
+                        </button>
+                        <button type="button" onclick="selectCustomTeam('경영지원팀')" class="team-option-btn w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-xs text-left cursor-pointer" data-team="경영지원팀">
+                            <span class="flex items-center gap-2">💼 경영지원팀 (총무·물류)</span>
+                            <span class="team-check text-emerald-600 font-black hidden">✓</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 컴팩트 실시간 기상/안전 알림 바 -->
+            <div class="flex-1 glass-card rounded-2xl px-4 py-2 flex items-center justify-between gap-3 text-xs bg-white/90 border border-emerald-200">
+                <div class="flex items-center gap-3 overflow-x-auto scrollbar-none py-0.5">
+                    <span class="font-extrabold text-emerald-800 flex items-center gap-1 shrink-0">
+                        <span>🌤️</span> <span>KMCI 현장날씨:</span>
+                    </span>
+                    <div id="weatherCompactStats" class="flex items-center gap-2.5 text-slate-600 shrink-0 font-medium">
+                        <span>기온 <b id="statTemp" class="text-slate-800">-</b></span>
+                        <span class="text-slate-300">|</span>
+                        <span>체감 <b id="statPerceivedTemp" class="text-amber-700">-</b></span>
+                        <span class="text-slate-300">|</span>
+                        <span>강수 <b id="statRain" class="text-teal-700">-</b></span>
+                        <span class="text-slate-300">|</span>
+                        <span>풍속 <b id="statWind" class="text-slate-800">-</b></span>
+                    </div>
+                    <div id="compactWeatherAlert" class="hidden items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900 font-bold shrink-0">
+                        <span>🚨</span> <span id="compactWarningText" class="truncate max-w-xs">특보 발령</span>
+                    </div>
+                </div>
+                <button type="button" onclick="fetchWeather()" class="text-[11px] text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded-lg transition-colors shrink-0 flex items-center gap-1 cursor-pointer" title="날씨 새로고침">
+                    <span>🔄</span> <span>날씨</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── 3단계 가로형 파이프라인 (3-Stage Horizontal Pipeline) ── -->
+        <!-- 접수된 리스트 (왼쪽) ➔ [TBM 생성버튼] ➔ 완성된 TBM 일지 (가운데) ➔ [QR작업계획서 생성버튼] ➔ QR작업계획서(다운로드) (오른쪽) -->
+        <div class="flex flex-col xl:flex-row items-stretch gap-3 w-full">
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- ◀ 1단계: 접수된 작업계획서 리스트 (왼쪽 영역) -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <section class="flex-1 min-w-[320px] glass-card rounded-3xl border-2 border-emerald-300/80 shadow-md overflow-hidden flex flex-col bg-white/95 min-h-[640px]">
+                <!-- 패널 상단 헤더 -->
+                <div class="bg-gradient-to-r from-emerald-800 to-teal-800 px-4 py-3.5 flex items-center justify-between gap-2 text-white">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center font-black text-sm shrink-0">📥</div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-black truncate">1단계 접수된 작업계획서</h3>
+                            <p class="text-[10px] text-emerald-100 truncate">총 <span id="receivedTotalCount" class="font-black text-yellow-300">0</span>건 접수됨</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="deleteSelectedReceivedWorkplans()" id="btnReceivedDeleteSelected" class="px-2 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white text-[11px] font-bold transition-all cursor-pointer border border-rose-400/40 flex items-center gap-1" title="체크된 접수 항목 제외/삭제">
+                            <span>🗑️ 선택 삭제</span>
+                        </button>
+                        <button type="button" onclick="toggleReceivedSelectAll()" id="btnReceivedSelectAll" class="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold transition-all cursor-pointer border border-white/20">
+                            전체 선택
+                        </button>
+                        <button type="button" onclick="loadReceivedWorkplans(true)" class="p-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs transition-all cursor-pointer border border-white/20" title="목록 새로고침">
+                            🔄
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 검색 및 탭 필터 -->
+                <div class="p-3 bg-slate-50 border-b border-slate-100 space-y-2">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-2.5 flex items-center text-slate-400 text-xs">🔍</span>
+                        <input type="text" id="receivedSearchInput" oninput="onReceivedSearch(this.value)" placeholder="작업명 또는 파일명 검색..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-medium text-slate-700">
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 px-1">
+                        <span>선택: <b id="receivedSelectedCount" class="text-emerald-700">0</b>건</span>
+                        <span class="text-[10px] text-slate-400">체크된 작업이 TBM 생성 대상입니다</span>
+                    </div>
+                </div>
+
+                <!-- 접수 목록 리스트 컨테이너 -->
+                <div id="receivedWorkplansList" class="flex-1 p-3 overflow-y-auto space-y-2.5 max-h-[530px]">
+                    <!-- 동적 렌더링 -->
+                </div>
+
+                <!-- 빈 상태 (Empty State) -->
+                <div id="receivedWorkplansEmpty" class="hidden py-24 px-4 text-center space-y-2 rounded-2xl my-auto">
+                    <div class="text-3xl text-slate-300">📂</div>
+                    <p class="text-xs font-bold text-slate-700">접수된 작업계획서가 없습니다</p>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        2단계 일일 작업계획서 Maker에서 전송하거나<br>
+                        사내 공유폴더에 등록 후 [🔄] 버튼을 눌러주세요.
+                    </p>
+                    <a href="./workplan-maker.html" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs">
+                        <span>일일 작업계획서 Maker 가기 ➔</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- ◀▶ 연결 버튼 1: [ TBM 생성 버튼 ] (중앙 1) -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <section class="shrink-0 flex xl:flex-col items-center justify-center gap-2 py-2 xl:py-0 w-full xl:w-28">
+                <button type="button" onclick="executeTBMGeneration()" id="btnGenerateTBM" class="w-full xl:w-28 xl:h-36 px-4 py-4 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black shadow-xl hover:shadow-2xl transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 border-emerald-300 active:scale-95 group">
+                    <span class="text-3xl group-hover:scale-110 group-hover:rotate-12 transition-transform animate-pulse">🚀</span>
+                    <span class="text-xs font-black text-center leading-tight">
+                        TBM 생성
+                    </span>
+                    <div class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-yellow-300 font-bold flex items-center gap-0.5">
+                        <span id="btnTbmSelectedCountBadge">0</span>건 <span class="hidden xl:inline">➔</span><span class="xl:hidden">▼</span>
+                    </div>
+                </button>
+                <div class="hidden xl:flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                    <span>1단계</span>
+                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    <span>2단계</span>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- ◀▶ 2단계: 완성된 TBM 일지 리스트 (가운데 영역) -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <section class="flex-1 min-w-[340px] glass-card rounded-3xl border-2 border-indigo-300/80 shadow-md overflow-hidden flex flex-col bg-white/95 min-h-[640px]">
+                <!-- 패널 상단 헤더 -->
+                <div class="bg-gradient-to-r from-indigo-800 via-blue-800 to-indigo-900 px-4 py-3.5 flex items-center justify-between gap-2 text-white">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center font-black text-sm shrink-0">📝</div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-black truncate">2단계 완성된 TBM 일지</h3>
+                            <p class="text-[10px] text-indigo-100 truncate">총 <span id="completedTbmTotalCount" class="font-black text-yellow-300">0</span>건 완성됨</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="deleteSelectedTbmSessions()" id="btnTbmDeleteSelected" class="px-2 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white text-[11px] font-bold transition-all cursor-pointer border border-rose-400/40 flex items-center gap-1" title="체크된 TBM 일지 삭제">
+                            <span>🗑️ 선택 삭제</span>
+                        </button>
+                        <button type="button" onclick="toggleTbmSelectAll()" id="btnTbmSelectAll" class="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold transition-all cursor-pointer border border-white/20">
+                            전체 선택
+                        </button>
+                        <button type="button" onclick="loadCompletedTbmSessions(true)" class="p-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs transition-all cursor-pointer border border-white/20" title="새로고침">
+                            🔄
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 상단 필터 / 힌트 바 -->
+                <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <span>선택: <b id="tbmSelectedCount" class="text-indigo-700">0</b>건</span>
+                    <span class="text-[10px] text-slate-400">대본 확인 및 PDF 일지 즉시 열람</span>
+                </div>
+
+                <!-- TBM 일지 리스트 컨테이너 -->
+                <div id="completedTbmList" class="flex-1 p-3 overflow-y-auto space-y-2.5 max-h-[530px]">
+                    <!-- 동적 렌더링 -->
+                </div>
+
+                <!-- 빈 상태 (Empty State) -->
+                <div id="completedTbmEmpty" class="hidden py-24 px-4 text-center space-y-2 rounded-2xl my-auto">
+                    <div class="text-3xl text-slate-300">📝</div>
+                    <p class="text-xs font-bold text-slate-700">생성 완료된 TBM 일지가 없습니다</p>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        1단계에서 작업계획서를 체크하신 후<br>
+                        가운데 [TBM 생성] 버튼을 눌러주세요.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- ◀▶ 연결 인디케이터: [ QR작업계획서 자동 생성 안내 ] (중앙 2) -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <section class="shrink-0 flex xl:flex-col items-center justify-center gap-2 py-2 xl:py-0 w-full xl:w-28">
+                <div class="w-full xl:w-28 xl:h-36 px-3 py-4 rounded-3xl bg-gradient-to-br from-teal-50/90 via-cyan-50/80 to-emerald-50/90 border-2 border-dashed border-teal-300/90 text-teal-900 shadow-sm flex flex-col items-center justify-center gap-1.5 text-center transition-all" title="TBM 생성 시 QR 작업계획서가 100% 자동 생성됩니다">
+                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center text-lg font-black shadow-xs">
+                        ⚡
+                    </div>
+                    <div>
+                        <span class="text-xs font-black text-slate-800 block leading-tight">
+                            QR 계획서<br><span class="text-teal-700">자동 생성</span>
+                        </span>
+                        <span class="text-[9px] text-teal-600 font-bold block mt-1 leading-tight">
+                            TBM 생성 시<br>자동 연동 완료
+                        </span>
+                    </div>
+                </div>
+                <div class="hidden xl:flex items-center gap-1 text-[10px] font-bold text-teal-600">
+                    <span>자동 연동</span>
+                    <svg class="w-3 h-3 text-teal-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- ▶ 3단계: QR 작업계획서 (다운로드 & 배포) (오른쪽 영역) -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <section id="qrWorkplansSection" class="flex-1 min-w-[320px] glass-card rounded-3xl border-2 border-teal-300/80 shadow-md overflow-hidden flex flex-col bg-white/95 min-h-[640px]">
+                <!-- 패널 상단 헤더 -->
+                <div class="bg-gradient-to-r from-teal-800 to-emerald-800 px-4 py-3.5 flex items-center justify-between gap-2 text-white">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center font-black text-sm shrink-0">📱</div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-black truncate">3단계 QR 작업계획서</h3>
+                            <p class="text-[10px] text-teal-100 truncate">총 <span id="qrTotalCount" class="font-black text-yellow-300">0</span>건 준비됨</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="hideSelectedQrSessionsFromScreen()" id="btnQrDeleteSelected" class="px-2 py-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white text-[11px] font-bold transition-all cursor-pointer border border-rose-400/40 flex items-center gap-1" title="체크된 QR 작업계획서를 화면 목록에서 제외 (영구 DB 파일 보존)">
+                            <span>✕ 선택 제외</span>
+                        </button>
+                        <button type="button" onclick="toggleQrSelectAll()" id="btnQrSelectAll" class="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold transition-all cursor-pointer border border-white/20">
+                            전체 선택
+                        </button>
+                        <button type="button" onclick="downloadAllQrWorkplans()" class="px-2.5 py-1 rounded-lg bg-white text-emerald-900 text-[11px] font-black transition-all cursor-pointer shadow-xs hover:shadow" title="모든 QR 계획서 엑셀 일괄 다운로드">
+                            📦 일괄 다운로드
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 상단 필터 / 가이드 바 -->
+                <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <div class="flex items-center gap-2">
+                        <span>선택: <b id="qrSelectedCount" class="text-teal-700">0</b>건</span>
+                        <button id="btnRestoreHiddenQr" type="button" onclick="restoreHiddenQrSessions()" class="hidden px-1.5 py-0.5 rounded bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 text-[10px] font-bold transition-all cursor-pointer" title="화면에서 제외했던 항목들을 다시 표시">
+                            <span>🔄</span> <span id="restoreHiddenQrText">제외 항목 다시 표시</span>
+                        </button>
+                    </div>
+                    <span class="text-[10px] text-slate-400">QR 썸네일 클릭 시 확대</span>
+                </div>
+
+                <!-- QR 계획서 리스트 컨테이너 -->
+                <div id="qrWorkplansList" class="flex-1 p-3 overflow-y-auto space-y-2.5 max-h-[530px]">
+                    <!-- 동적 렌더링 -->
+                </div>
+
+                <!-- 빈 상태 (Empty State) -->
+                <div id="qrWorkplansEmpty" class="hidden py-24 px-4 text-center space-y-2 rounded-2xl my-auto">
+                    <div class="text-3xl text-slate-300">📱</div>
+                    <p class="text-xs font-bold text-slate-700">QR 작업계획서가 아직 없습니다</p>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        1단계에서 [TBM 생성]을 실행하면<br>
+                        QR 코드가 포함된 작업계획서가 자동으로 함께 생성됩니다.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- ── 모달 1: TBM 일지 상세 & AI 대본 모달 (TBM 이력 연동) ── -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeDetailModal()"></div>
+        <div class="relative glass-card bg-white/95 rounded-3xl max-w-2xl w-full p-5 sm:p-7 space-y-5 shadow-2xl border border-white max-h-[90vh] flex flex-col z-10 animate-fade-in">
+            <!-- 모달 헤더 -->
+            <div class="flex items-start justify-between border-b border-slate-100 pb-3 gap-2">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span id="modalTeamBadge" class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">🏢 생산1부</span>
+                        <span id="modalStatusBadge" class="text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">대기중</span>
+                        <span id="modalTime" class="text-[11px] text-slate-400 font-mono"></span>
+                    </div>
+                    <h3 id="modalWorkTitle" class="text-base sm:text-lg font-black text-slate-900 mt-1 line-clamp-1">작업계획서</h3>
+                    <p id="modalWorkDate" class="text-xs text-slate-500 font-medium"></p>
+                </div>
+                <button type="button" onclick="closeDetailModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm transition-all cursor-pointer shrink-0">
+                    ✕
+                </button>
+            </div>
+
+            <!-- 스크롤 본문 -->
+            <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                <!-- 음성 낭독 컨트롤러 바 -->
+                <div id="modalAudioSection" class="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between gap-2 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">🎙️</span>
+                        <div>
+                            <p class="text-xs font-black text-emerald-950">AI 음성 낭독 (현장 TBM 재생용)</p>
+                            <p class="text-[10px] text-emerald-700">작업자 교육 시 4분 대본을 자동으로 육성 낭독합니다.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="modalTtsBtn" onclick="toggleModalTts()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-xs transition-all flex items-center gap-1 cursor-pointer">
+                            <span>🔊 음성 낭독 (TTS)</span>
+                        </button>
+                        <button type="button" onclick="copyModalScript()" class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all cursor-pointer">
+                            📋 복사
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 특보 & 화학물질 경고 박스 -->
+                <div id="modalAlertBox" class="space-y-2"></div>
+
+                <!-- 핵심 안전 포인트 -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <h4 class="text-xs font-black text-slate-900 flex items-center gap-1">
+                        <span>🎯</span> <span>핵심 안전 수칙</span>
+                    </h4>
+                    <ul id="modalKeyPoints" class="space-y-1.5 text-xs text-slate-700 font-medium"></ul>
+                </div>
+
+                <!-- 현장 TBM 문구 -->
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                    <h4 class="text-xs font-black text-slate-900 flex items-center gap-1">
+                        <span>📋</span> <span>현장 TBM 문구</span>
+                    </h4>
+                    <p id="modalScript" class="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-normal break-keep"></p>
+                </div>
+
+                <!-- 현장 작업자 서명 현황 -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-black text-slate-900 flex items-center gap-1">
+                            <span>✍️</span> <span>현장 작업자 서명 현황</span>
+                        </h4>
+                        <span id="modalSignerCountBadge" class="text-[10px] font-black bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">0명 참여</span>
+                    </div>
+                    <div id="modalSignaturesList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- 모달 푸터 버튼 -->
+            <div class="flex items-center justify-between border-t border-slate-100 pt-3 gap-2 flex-wrap">
+                <button type="button" id="modalOpenPdfBtn" onclick="openTbmPdfCurrent()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                    <span>📄 TBM일지 보기 (PDF)</span>
+                </button>
+                <button type="button" onclick="closeDetailModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all cursor-pointer">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 모달 2: 대형 QR 스캔 모달 (현장 반장 즉시 스캔용) ── -->
+    <div id="qrModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeQrModal()"></div>
+        <div class="relative glass-card bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-white z-10 animate-fade-in">
+            <h3 class="text-base font-black text-slate-900">📱 현장 모바일 TBM QR</h3>
+            <p class="text-xs text-slate-500">현장 작업자·반장 스마트폰 카메라로 스캔하시면 서명 페이지로 바로 연결됩니다.</p>
+            <div class="w-56 h-56 mx-auto bg-white p-3 rounded-2xl border-2 border-emerald-300 shadow-md flex items-center justify-center">
+                <img id="qrModalImg" src="" alt="QR" class="w-full h-full object-contain">
+            </div>
+            <p id="qrModalTitle" class="text-xs font-bold text-slate-800 truncate"></p>
+            <div class="flex items-center justify-center gap-2 pt-2">
+                <button type="button" id="qrModalCopyLinkBtn" onclick="copyCurrentQrLink()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition-all cursor-pointer">
+                    📋 모바일 링크 복사
+                </button>
+                <button type="button" onclick="closeQrModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 모달 3: 일괄 TBM 생성 진행 모달 ── -->
+    <div id="batchProgressModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="relative glass-card bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-4 shadow-2xl border border-white z-10 animate-fade-in">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold shadow-xs animate-bounce">
+                🚀
+            </div>
+            <div>
+                <h3 id="batchProgressTitle" class="text-base font-black text-slate-900">TBM 일괄 생성 진행 중...</h3>
+                <p id="batchProgressSubtitle" class="text-xs text-slate-500 mt-1">Gemini AI가 작업 위험성을 분석하고 안전 대본을 작성합니다.</p>
+            </div>
+            <div class="space-y-1.5 text-left">
+                <div class="flex items-center justify-between text-xs font-bold">
+                    <span id="batchProgressText" class="text-emerald-700 truncate max-w-[240px]">준비 중...</span>
+                    <span id="batchProgressPercent" class="text-slate-500">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div id="batchProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-600 h-full w-0 transition-all duration-300 rounded-full"></div>
+                </div>
+            </div>
+            <div id="batchProgressFooter" class="hidden pt-2">
+                <button type="button" onclick="closeBatchProgressModal()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all cursor-pointer">
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── JavaScript 로직 ── -->
+    <script>
+        // 전역 상태
+        let currentTeam = '생산1부';
+        let currentWorkplanMonth = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7);
+        let weatherSummaryText = '';
+
+        // 1단계: 접수된 작업계획서 데이터
+        let receivedWorkplans = [];
+        let selectedReceivedSet = new Set();
+
+        // 2단계: 완성된 TBM 일지 데이터
+        let completedTbmSessions = [];
+        let selectedTbmSet = new Set();
+
+        // 현재 모달 세션 데이터
+        let currentModalSession = null;
+        let modalSpeaking = false;
+        let currentQrUrl = '';
+
+        // ── DOM 초기화 ──
+        document.addEventListener('DOMContentLoaded', () => {
+            // URL 파라미터 또는 저장소에서 팀 로드
+            const urlParams = new URLSearchParams(window.location.search);
+            const teamFromUrl = urlParams.get('team');
+            const teamFromStorage = sessionStorage.getItem('selectedTeam') || localStorage.getItem('selectedTeam') || localStorage.getItem('kmci_current_team');
+            if (teamFromUrl) {
+                currentTeam = teamFromUrl;
+            } else if (teamFromStorage) {
+                currentTeam = teamFromStorage;
+            }
+            updateTeamUI(currentTeam);
+
+            // 실시간 날씨 로드
+            fetchWeather();
+
+            // 1단계 (접수된 리스트) 로드
+            loadReceivedWorkplans();
+
+            // 2단계 (완성된 TBM 일지) 로드
+            loadCompletedTbmSessions();
+
+            // 외부 클릭 시 드롭다운 닫기
+            document.addEventListener('click', (e) => {
+                const container = document.getElementById('teamDropdownContainer');
+                if (container && !container.contains(e.target)) {
+                    closeCustomTeamDropdown();
+                }
+            });
+        });
+
+        // ── 부서 선택 및 UI 동기화 ──
+        function toggleCustomTeamDropdown() {
+            const menu = document.getElementById('teamDropdownMenu');
+            const arrow = document.getElementById('teamDropdownArrow');
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                if (arrow) arrow.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                if (arrow) arrow.classList.remove('rotate-180');
+            }
+        }
+
+        function closeCustomTeamDropdown() {
+            const menu = document.getElementById('teamDropdownMenu');
+            const arrow = document.getElementById('teamDropdownArrow');
+            if (menu) menu.classList.add('hidden');
+            if (arrow) arrow.classList.remove('rotate-180');
+        }
+
+        function selectCustomTeam(team) {
+            closeCustomTeamDropdown();
+            currentTeam = team;
+            updateTeamUI(team);
+
+            // URL 갱신
+            const url = new URL(window.location);
+            url.searchParams.set('team', team);
+            window.history.replaceState({}, '', url);
+
+            // 부서 전환 시 1단계 및 2단계 리로드
+            loadReceivedWorkplans();
+            loadCompletedTbmSessions();
+        }
+
+        function updateTeamUI(team) {
+            currentTeam = team;
+            sessionStorage.setItem('selectedTeam', team);
+            localStorage.setItem('selectedTeam', team);
+            localStorage.setItem('kmci_current_team', team);
+
+            const display = document.getElementById('currentTeamDisplay');
+            if (display) display.textContent = team;
+
+            document.querySelectorAll('#teamOptionsList .team-option-btn').forEach(btn => {
+                const optTeam = btn.getAttribute('data-team');
+                const isSelected = (optTeam === team);
+                const checkEl = btn.querySelector('.team-check');
+                if (isSelected) {
+                    btn.classList.add('bg-emerald-50', 'text-emerald-950');
+                    if (checkEl) checkEl.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('bg-emerald-50', 'text-emerald-950');
+                    if (checkEl) checkEl.classList.add('hidden');
+                }
+            });
+
+            // 공무팀 6단계 vs 타 부서 5단계 순서도 동적 렌더링
+            renderPipelineNav(team);
+
+            const historyUrl = `/history?team=${encodeURIComponent(team)}`;
+            const topHistoryBtn = document.getElementById('topNavHistoryBtn');
+            if (topHistoryBtn) topHistoryBtn.href = historyUrl;
+        }
+
+        function renderPipelineNav(targetTeam) {
+            const container = document.getElementById('flowNavContainer');
+            if (!container) return;
+
+            if (targetTeam === '공무팀') {
+                container.innerHTML = `
+                <!-- Step 1: 일일 위험성평가 -->
+                <a href="/daily-risk?team=공무팀" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 공무팀 일일 위험성평가 목록 열람">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🛡️</span>
+                            <span class="text-xs font-black truncate">일일 위험성평가</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">당일 위험성평가 열람</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 표준 작업계획서 DB -->
+                <a href="/standard-workplan?team=공무팀" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="2단계: 부서별 표준 작업계획서 DB">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">부서별 표준 작업계획서</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: 일일 작업계획서 Maker -->
+                <a href="/workplan-maker?team=공무팀" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="3단계: 일일 작업계획서 Maker">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM Maker (현재 위치 활성화) -->
+                <div class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate">TBM Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">날씨·AI브리핑·QR</p>
+                    </div>
+                </div>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: TBM일지관리 -->
+                <a href="/history?team=공무팀" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">TBM일지관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 6: 최종 작업계획서 관리 -->
+                <a href="/admin?team=공무팀" id="flowStep6" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="6단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">6</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">최종 작업계획서 관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+                `;
+            } else {
+                container.innerHTML = `
+                <!-- Step 1: 표준 작업계획서 DB -->
+                <a href="/standard-workplan?team=${encodeURIComponent(targetTeam)}" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="1단계: 부서별 표준 작업계획서 DB">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">부서별 표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 일일 작업계획서 Maker -->
+                <a href="/workplan-maker?team=${encodeURIComponent(targetTeam)}" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="2단계: 일일 작업계획서 Maker">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: TBM Maker (현재 위치 활성화) -->
+                <div class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate">TBM Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">날씨·AI브리핑·QR</p>
+                    </div>
+                </div>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM일지관리 -->
+                <a href="/history?team=${encodeURIComponent(targetTeam)}" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">TBM일지관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: 최종 작업계획서 관리 -->
+                <a href="/admin?team=${encodeURIComponent(targetTeam)}" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 hover:text-emerald-900 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-emerald-100 text-slate-700 group-hover:text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate group-hover:text-emerald-800">최종 작업계획서 관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 group-hover:text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+                `;
+            }
+        }
+
+        // ── 실시간 날씨 데이터 조회 ──
+        async function fetchWeather() {
+            try {
+                const res = await fetch('/api/weather');
+                if (!res.ok) throw new Error('날씨 API 오류');
+                const data = await res.json();
+                weatherSummaryText = data.summary || '';
+
+                // API 응답: data.current.*, data.forecast.*, data.warnings[]
+                const cur = data.current || {};
+                const fcast = data.forecast || {};
+                // 숫자만 추출 (단위 문자 제거)
+                const tempVal = cur.temperature ? cur.temperature.replace('℃','').trim() : '-';
+                const perceivedVal = cur.perceivedTemp ? cur.perceivedTemp.replace('℃','').trim() : tempVal;
+                const windVal = cur.windSpeed ? cur.windSpeed.replace('m/s','').trim() : '-';
+                const rainVal = fcast.rainProb ? fcast.rainProb.replace('%','').trim() : '0';
+
+                if (document.getElementById('statTemp')) document.getElementById('statTemp').textContent = `${tempVal}°C`;
+                if (document.getElementById('statPerceivedTemp')) document.getElementById('statPerceivedTemp').textContent = `${perceivedVal}°C`;
+                if (document.getElementById('statRain')) document.getElementById('statRain').textContent = `${rainVal}%`;
+                if (document.getElementById('statWind')) document.getElementById('statWind').textContent = `${windVal}m/s`;
+
+                const alertBox = document.getElementById('compactWeatherAlert');
+                const alertText = document.getElementById('compactWarningText');
+                const warnings = data.warnings || [];
+                if (warnings.length > 0) {
+                    if (alertBox) alertBox.classList.remove('hidden');
+                    if (alertText) alertText.textContent = warnings[0];
+                } else {
+                    if (alertBox) alertBox.classList.add('hidden');
+                }
+            } catch (e) {
+                console.warn('날씨 조회 오류:', e);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── 1단계: 접수된 작업계획서 목록 로직 (왼쪽) ──
+        // ══════════════════════════════════════════════════════════════════
+        async function loadReceivedWorkplans(forceRefresh = false) {
+            receivedWorkplans = [];
+            selectedReceivedSet.clear();
+
+            // A. 2단계(일일 작업계획서 Maker)에서 전달된 단일 계획서 확인
+            try {
+                const targetRaw = sessionStorage.getItem('tbmTargetWorkplan');
+                if (targetRaw) {
+                    const item = JSON.parse(targetRaw);
+                    if (item && item.title) {
+                        receivedWorkplans.push({
+                            id: 'transferred_target',
+                            title: item.title,
+                            fileName: item.fileName || `${item.title}.xlsx`,
+                            team: item.team || currentTeam,
+                            workDate: item.workDate || new Date().toISOString().split('T')[0],
+                            filePath: item.filePath || '',
+                            isTransferred: true,
+                            autoSelected: true
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            // B. 2단계 완성 목록 전체 전달분 확인
+            try {
+                const completedRaw = sessionStorage.getItem('completedWorkplans');
+                if (completedRaw) {
+                    const list = JSON.parse(completedRaw);
+                    if (Array.isArray(list)) {
+                        list.forEach((wp, idx) => {
+                            if (!receivedWorkplans.some(x => x.title === wp.title || (wp.fileName && x.fileName === wp.fileName))) {
+                                receivedWorkplans.push({
+                                    id: `completed_${idx}`,
+                                    title: wp.title || `작업계획서_${idx+1}`,
+                                    fileName: wp.fileName || `${wp.title || '작업'}.xlsx`,
+                                    team: wp.team || currentTeam,
+                                    workDate: wp.workDate || new Date().toISOString().split('T')[0],
+                                    filePath: wp.filePath || '',
+                                    isTransferred: true,
+                                    autoSelected: true
+                                });
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            // C. 사내 공유폴더 작업계획서 목록 fetch
+            try {
+                const res = await fetch(`/api/network/workplans?team=${encodeURIComponent(currentTeam)}&month=${encodeURIComponent(currentWorkplanMonth)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const networkFiles = data.files || [];
+                    networkFiles.forEach((f, idx) => {
+                        const cleanTitle = (f.name || '').replace('.xlsx', '');
+                        if (!receivedWorkplans.some(x => x.fileName === f.name)) {
+                            receivedWorkplans.push({
+                                id: `network_${idx}`,
+                                title: cleanTitle,
+                                fileName: f.name,
+                                team: currentTeam,
+                                workDate: f.mtime ? new Date(f.mtime).toISOString().split('T')[0] : currentWorkplanMonth,
+                                filePath: f.fullPath || f.relativePath,
+                                isTransferred: false,
+                                autoSelected: false
+                            });
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('사내 공유폴더 로드 실패:', err);
+            }
+
+            // 전달된 항목이 있으면 자동 선택 처리, 없으면 전체 선택
+            if (receivedWorkplans.length > 0) {
+                const hasTransferred = receivedWorkplans.some(x => x.autoSelected);
+                receivedWorkplans.forEach((item, idx) => {
+                    if (hasTransferred) {
+                        if (item.autoSelected) selectedReceivedSet.add(idx);
+                    } else {
+                        selectedReceivedSet.add(idx);
+                    }
+                });
+            }
+
+            renderReceivedWorkplans();
+            updateReceivedCountUI();
+        }
+
+        function renderReceivedWorkplans(filterText = '') {
+            const container = document.getElementById('receivedWorkplansList');
+            const emptyEl = document.getElementById('receivedWorkplansEmpty');
+            if (!container) return;
+
+            let items = receivedWorkplans;
+            if (filterText && filterText.trim()) {
+                const q = filterText.toLowerCase();
+                items = items.filter(x => (x.title && x.title.toLowerCase().includes(q)) || (x.fileName && x.fileName.toLowerCase().includes(q)));
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = '';
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            container.innerHTML = items.map((wp, idx) => {
+                const originalIndex = receivedWorkplans.indexOf(wp);
+                const isChecked = selectedReceivedSet.has(originalIndex);
+                return `
+                    <div onclick="toggleReceivedItem(${originalIndex})" class="p-3 rounded-2xl border ${isChecked ? 'border-emerald-500 bg-emerald-50/70 shadow-xs' : 'border-slate-200/90 bg-white hover:border-emerald-300'} transition-all cursor-pointer flex items-start justify-between gap-2.5">
+                        <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleReceivedItem(${originalIndex})" class="w-4 h-4 mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer shrink-0">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${wp.isTransferred ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">
+                                        ${wp.isTransferred ? '✨ 2단계 전달' : '📂 공유폴더'}
+                                    </span>
+                                    <span class="text-[10px] font-bold text-slate-500">📅 ${wp.workDate || '-'}</span>
+                                </div>
+                                <h4 class="text-xs font-black text-slate-900 mt-1 line-clamp-1">${escapeHtml(wp.title)}</h4>
+                                <p class="text-[10px] text-slate-400 font-mono truncate mt-0.5">${escapeHtml(wp.fileName)}</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="event.stopPropagation(); removeSingleReceivedItem(${originalIndex})" class="w-6 h-6 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs transition-colors cursor-pointer shrink-0" title="이 작업계획서 제외">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleReceivedItem(idx) {
+            if (selectedReceivedSet.has(idx)) {
+                selectedReceivedSet.delete(idx);
+            } else {
+                selectedReceivedSet.add(idx);
+            }
+            renderReceivedWorkplans(document.getElementById('receivedSearchInput')?.value || '');
+            updateReceivedCountUI();
+        }
+
+        function toggleReceivedSelectAll() {
+            if (selectedReceivedSet.size === receivedWorkplans.length) {
+                selectedReceivedSet.clear();
+            } else {
+                receivedWorkplans.forEach((_, idx) => selectedReceivedSet.add(idx));
+            }
+            renderReceivedWorkplans(document.getElementById('receivedSearchInput')?.value || '');
+            updateReceivedCountUI();
+        }
+
+        async function removeSingleReceivedItem(idx) {
+            if (idx < 0 || idx >= receivedWorkplans.length) return;
+            const item = receivedWorkplans[idx];
+            if (!confirm(`'${item.title || item.fileName}' 작업을 목록에서 제외하시겠습니까?`)) return;
+
+            // 1. 서버의 임시 일일 작업계획서 파일 삭제 요청
+            try {
+                await fetch('/api/workplan/delete-temp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileName: item.fileName,
+                        filePath: item.filePath,
+                        team: currentTeam,
+                        month: currentWorkplanMonth
+                    })
+                });
+            } catch (e) {
+                console.warn('임시 파일 삭제 API 오류:', e);
+            }
+
+            // 2. sessionStorage 에서 해당 항목 제거
+            try {
+                const targetRaw = sessionStorage.getItem('tbmTargetWorkplan');
+                if (targetRaw) {
+                    const t = JSON.parse(targetRaw);
+                    if (t && (t.title === item.title || t.fileName === item.fileName)) {
+                        sessionStorage.removeItem('tbmTargetWorkplan');
+                    }
+                }
+                const completedRaw = sessionStorage.getItem('completedWorkplans');
+                if (completedRaw) {
+                    let list = JSON.parse(completedRaw);
+                    if (Array.isArray(list)) {
+                        list = list.filter(x => x.title !== item.title && x.fileName !== item.fileName);
+                        sessionStorage.setItem('completedWorkplans', JSON.stringify(list));
+                    }
+                }
+            } catch (e) {}
+
+            // 3. 화면 목록에서 제거
+            receivedWorkplans.splice(idx, 1);
+            selectedReceivedSet.delete(idx);
+            const nextSet = new Set();
+            selectedReceivedSet.forEach(i => {
+                if (i > idx) nextSet.add(i - 1);
+                else if (i < idx) nextSet.add(i);
+            });
+            selectedReceivedSet = nextSet;
+            renderReceivedWorkplans(document.getElementById('receivedSearchInput')?.value || '');
+            updateReceivedCountUI();
+            showToastMessage('작업계획서가 임시 작업장에서 삭제되었습니다.');
+        }
+
+        async function deleteSelectedReceivedWorkplans() {
+            const selectedIndices = Array.from(selectedReceivedSet).sort((a, b) => b - a);
+            if (selectedIndices.length === 0) {
+                alert('삭제할 작업계획서를 체크박스로 선택해 주세요.');
+                return;
+            }
+            if (!confirm(`선택한 ${selectedIndices.length}건의 작업계획서를 목록에서 제외하시겠습니까?`)) return;
+
+            for (const idx of selectedIndices) {
+                const item = receivedWorkplans[idx];
+                if (!item) continue;
+                // 서버 임시 파일 삭제
+                try {
+                    await fetch('/api/workplan/delete-temp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fileName: item.fileName,
+                            filePath: item.filePath,
+                            team: currentTeam,
+                            month: currentWorkplanMonth
+                        })
+                    });
+                } catch (_) {}
+
+                // sessionStorage 에서 제거
+                try {
+                    const completedRaw = sessionStorage.getItem('completedWorkplans');
+                    if (completedRaw) {
+                        let list = JSON.parse(completedRaw);
+                        if (Array.isArray(list)) {
+                            list = list.filter(x => x.title !== item.title && x.fileName !== item.fileName);
+                            sessionStorage.setItem('completedWorkplans', JSON.stringify(list));
+                        }
+                    }
+                } catch (_) {}
+
+                receivedWorkplans.splice(idx, 1);
+            }
+
+            sessionStorage.removeItem('tbmTargetWorkplan');
+            selectedReceivedSet.clear();
+            renderReceivedWorkplans(document.getElementById('receivedSearchInput')?.value || '');
+            updateReceivedCountUI();
+            showToastMessage(`총 ${selectedIndices.length}건의 작업계획서가 임시 작업장에서 삭제되었습니다.`);
+        }
+
+        function onReceivedSearch(val) {
+            renderReceivedWorkplans(val);
+        }
+
+        function updateReceivedCountUI() {
+            const totalEl = document.getElementById('receivedTotalCount');
+            const selectedEl = document.getElementById('receivedSelectedCount');
+            const btnBadge = document.getElementById('btnTbmSelectedCountBadge');
+
+            const total = receivedWorkplans.length;
+            const selCount = selectedReceivedSet.size;
+
+            if (totalEl) totalEl.textContent = total;
+            if (selectedEl) selectedEl.textContent = selCount;
+            if (btnBadge) btnBadge.textContent = selCount;
+
+            const btnGen = document.getElementById('btnGenerateTBM');
+            if (btnGen) {
+                if (selCount === 0) {
+                    btnGen.classList.add('opacity-60');
+                } else {
+                    btnGen.classList.remove('opacity-60');
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── 1단계 ➔ 2단계: [TBM 생성] 실행 로직 (중앙 버튼 1) ──
+        // ══════════════════════════════════════════════════════════════════
+        async function executeTBMGeneration() {
+            const selectedIndices = Array.from(selectedReceivedSet);
+            if (selectedIndices.length === 0) {
+                alert('TBM을 생성할 작업계획서를 최소 1개 이상 선택해 주세요.');
+                return;
+            }
+
+            const targetItems = selectedIndices.map(idx => receivedWorkplans[idx]).filter(Boolean);
+            const total = targetItems.length;
+
+            openBatchProgressModal(total, `${total}건의 작업계획서 TBM 일지 생성`);
+
+            let completed = 0;
+            let failed = 0;
+            const newSessionIds = [];
+            const failedItems = [];
+
+            for (let i = 0; i < total; i++) {
+                const item = targetItems[i];
+                updateBatchProgress(i + 1, total, Math.round(((i + 1) / total) * 100), `[${i+1}/${total}] ${item.title} TBM 생성 중...`);
+
+                try {
+                    // 기상청 날씨 확보
+                    const weatherText = weatherSummaryText || '맑음 22도 현장 양호';
+
+                    // 1. 개별 TBM 대본 생성 API 요청 (Gemini AI)
+                    const tbmRes = await fetch('/api/generate-tbm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            weather: weatherText,
+                            excelData: item.title,
+                            workDate: item.workDate
+                        })
+                    });
+
+                    if (!tbmRes.ok) {
+                        const errData = await tbmRes.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Gemini AI 호출 차단 또는 응답 실패');
+                    }
+
+                    const tbmData = await tbmRes.json();
+
+                    // 2. TBM 세션 및 QR 발급 생성 요청
+                    const sessionRes = await fetch('/api/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            weather: weatherText,
+                            weatherAlert: tbmData.날씨특보 || '',
+                            chemicalHazard: tbmData.화학물질위험성 || '',
+                            chemicalProcess: tbmData.해당공정 || '',
+                            chemicals: tbmData.화학물질 || '',
+                            points: tbmData.핵심포인트 || [],
+                            script: tbmData.TBM문구,
+                            excelData: item.title,
+                            fileName: item.fileName,
+                            workTitle: item.title,
+                            workDate: item.workDate,
+                            teamName: currentTeam,
+                            yearMonth: currentWorkplanMonth
+                        })
+                    });
+
+                    if (!sessionRes.ok) {
+                        const sErr = await sessionRes.json().catch(() => ({}));
+                        throw new Error(sErr.error || 'TBM 세션 저장 실패');
+                    }
+
+                    const session = await sessionRes.json();
+                    newSessionIds.push(session.id);
+                    completed++;
+                } catch (err) {
+                    console.error('TBM 생성 오류:', err);
+                    failed++;
+                    failedItems.push({ title: item.title, error: err.message });
+                }
+            }
+
+            // ★ 원스톱 완전 자동화: TBM 생성과 동시에 QR 작업계획서 영구 보존 생성 및 임시 파일 정리까지 자동 완결
+            if (newSessionIds.length > 0) {
+                try {
+                    // 1. 모든 신규 세션의 QR 작업계획서 영구 보관 파일 즉시 확정 생성
+                    await fetch('/api/sessions/ensure-workplans', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: newSessionIds })
+                    });
+
+                    // 2. 임시 일일 작업계획서 자동 정리
+                    const cleanupItems = itemsToProcess.map(it => ({
+                        workTitle: it.title,
+                        fileName: it.fileName,
+                        teamName: currentTeam,
+                        yearMonth: currentWorkplanMonth
+                    }));
+
+                    await fetch('/api/workplan/cleanup-temp-after-qr', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanupItems })
+                    });
+
+                    // 1단계 접수 목록에서 처리된 작업 자동 제거
+                    const processedTitles = itemsToProcess.map(it => (it.title || '').trim().toLowerCase());
+                    receivedWorkplans = receivedWorkplans.filter(wp => {
+                        const wpTitle = (wp.title || '').trim().toLowerCase();
+                        return !processedTitles.some(t => t && (wpTitle.includes(t) || t.includes(wpTitle)));
+                    });
+                    selectedReceivedSet.clear();
+                    renderReceivedWorkplans();
+                    updateReceivedCountUI();
+
+                    sessionStorage.removeItem('completedWorkplans');
+                    sessionStorage.removeItem('tbmTargetWorkplan');
+                } catch (autoErr) {
+                    console.warn('QR 작업계획서 자동 연동 처리 중 비치명적 알림:', autoErr);
+                }
+            }
+
+            // 세션 리스트 새로고침
+            await loadCompletedTbmSessions(true);
+
+            // 신규 생성된 세션 2단계에서 자동 선택
+            selectedTbmSet.clear();
+            completedTbmSessions.forEach((s, idx) => {
+                if (newSessionIds.includes(s.id)) {
+                    selectedTbmSet.add(idx);
+                }
+            });
+            renderCompletedTbmList();
+            renderQrWorkplans();
+            updateTbmCountUI();
+
+            // 모달 완료 및 결과 상태 표시
+            if (completed === 0 && failed > 0) {
+                const failReasons = failedItems.map(f => `• ${f.title}: ${f.error}`).join('\n');
+                finishBatchProgressModal(`❌ Gemini AI 호출 실패로 TBM 일지 생성이 불가합니다.\n\n[실패 원인]\n${failReasons}`);
+                alert(`⚠️ Gemini AI 호출이 차단/실패하여 TBM 일지를 생성할 수 없습니다.\n\n${failReasons}`);
+            } else if (failed > 0) {
+                const failReasons = failedItems.map(f => `• ${f.title}: ${f.error}`).join('\n');
+                finishBatchProgressModal(`⚠️ TBM 일지 ${completed}건 생성 완료 (${failed}건 실패)\n\n[실패 항목]\n${failReasons}`);
+            } else {
+                finishBatchProgressModal(`🎉 TBM 일지 ${completed}건 생성이 정상 완료되었습니다!`);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── 2단계: 완성된 TBM 일지 목록 로직 (가운데) (TBM 이력 연동) ──
+        // ══════════════════════════════════════════════════════════════════
+        async function loadCompletedTbmSessions(silent = false) {
+            try {
+                // 원칙 4: TBM Maker는 임시 작업장이므로 서명 전 '대기(미서명)' 임시 TBM 일지만 조회
+                // (서명이 완료된 TBM 일지는 2단계 작업장에서 자동으로 빠져나가 4번 전자서명관리로 이동 보관됨)
+                const res = await fetch(`/api/sessions?team=${encodeURIComponent(currentTeam)}&month=${encodeURIComponent(currentWorkplanMonth)}&status=pending`);
+                if (!res.ok) throw new Error('세션 목록 조회 실패');
+                const list = await res.json();
+                completedTbmSessions = Array.isArray(list) ? list : [];
+
+                // 기본적으로 상위 1~3건 자동 선택
+                if (selectedTbmSet.size === 0 && completedTbmSessions.length > 0) {
+                    selectedTbmSet.add(0);
+                }
+
+                renderCompletedTbmList();
+                renderQrWorkplans();
+                updateTbmCountUI();
+                updateQrCountUI();
+            } catch (err) {
+                console.warn('완성된 TBM 세션 로드 실패:', err);
+            }
+        }
+
+        function renderCompletedTbmList() {
+            const container = document.getElementById('completedTbmList');
+            const emptyEl = document.getElementById('completedTbmEmpty');
+            if (!container) return;
+
+            if (completedTbmSessions.length === 0) {
+                container.innerHTML = '';
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            container.innerHTML = completedTbmSessions.map((session, idx) => {
+                const isChecked = selectedTbmSet.has(idx);
+                const isCompleted = (session.status === '완료');
+                const sigCount = (session.signatures && session.signatures.length) || 0;
+
+                return `
+                    <div onclick="toggleTbmItem(${idx})" class="p-3 sm:p-3.5 rounded-2xl border ${isChecked ? 'border-indigo-500 bg-indigo-50/70 shadow-xs' : 'border-slate-200/90 bg-white hover:border-indigo-300'} transition-all cursor-pointer space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                                <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleTbmItem(${idx})" class="w-4 h-4 mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer shrink-0">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-indigo-100 text-indigo-800">${session.teamName || currentTeam}</span>
+                                        <span class="text-[10px] font-bold text-slate-500">📅 ${session.workDate || '-'}</span>
+                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                            ${isCompleted ? `✅ 서명 완료 (${sigCount}명)` : `⏳ 서명 대기 (${sigCount}명)`}
+                                        </span>
+                                    </div>
+                                    <h4 class="text-xs sm:text-sm font-black text-slate-900 mt-1 line-clamp-1">${escapeHtml(session.workTitle || session.fileName || 'TBM 작업')}</h4>
+                                    <p class="text-[10px] text-slate-400 font-mono truncate mt-0.5">${escapeHtml(session.fileName || '')}</p>
+                                </div>
+                            </div>
+                            <!-- 개별 세션 삭제 버튼 -->
+                            <button type="button" onclick="event.stopPropagation(); deleteSessionItem('${session.id}', '${escapeHtml(session.workTitle || 'TBM')}')" class="w-6 h-6 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs transition-colors cursor-pointer shrink-0" title="이 임시 TBM 일지 삭제">
+                                🗑️
+                            </button>
+                        </div>
+
+                        <!-- 핵심 포인트 1줄 프리뷰 -->
+                        ${session.points && session.points.length > 0 ? `
+                            <div class="px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 text-[10px] text-slate-600 line-clamp-1">
+                                <span class="font-bold text-indigo-600">수칙:</span> ${escapeHtml(session.points[0])}
+                            </div>
+                        ` : ''}
+
+                        <!-- 액션 버튼 그룹 (대본·상세, TBM일지 보기) -->
+                        <div class="flex items-center gap-1.5 pt-1.5 border-t border-slate-100 justify-end flex-wrap">
+                            <button type="button" onclick="event.stopPropagation(); openDetailModal('${session.id}')" class="px-2.5 py-1 rounded-xl bg-white hover:bg-indigo-50 text-indigo-900 border border-indigo-200 text-[11px] font-bold shadow-3xs transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📋</span> <span>대본·상세</span>
+                            </button>
+                            <button type="button" onclick="event.stopPropagation(); openTbmPdf('${session.id}')" class="px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-[11px] font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📄</span> <span>TBM일지 보기</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleTbmItem(idx) {
+            if (selectedTbmSet.has(idx)) {
+                selectedTbmSet.delete(idx);
+            } else {
+                selectedTbmSet.add(idx);
+            }
+            renderCompletedTbmList();
+            updateTbmCountUI();
+        }
+
+        function toggleTbmSelectAll() {
+            if (selectedTbmSet.size === completedTbmSessions.length) {
+                selectedTbmSet.clear();
+            } else {
+                completedTbmSessions.forEach((_, idx) => selectedTbmSet.add(idx));
+            }
+            renderCompletedTbmList();
+            updateTbmCountUI();
+        }
+
+        function updateTbmCountUI() {
+            const total = completedTbmSessions.length;
+            const selCount = selectedTbmSet.size;
+
+            const totalEl = document.getElementById('completedTbmTotalCount');
+            const selEl = document.getElementById('tbmSelectedCount');
+            const btnBadge = document.getElementById('btnQrSelectedCountBadge');
+
+            if (totalEl) totalEl.textContent = total;
+            if (selEl) selEl.textContent = selCount;
+            if (btnBadge) btnBadge.textContent = selCount;
+
+            const btnGenQr = document.getElementById('btnGenerateQr');
+            if (btnGenQr) {
+                if (selCount === 0) {
+                    btnGenQr.classList.add('opacity-60');
+                } else {
+                    btnGenQr.classList.remove('opacity-60');
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── 2단계 ➔ 3단계: [QR작업계획서 생성] 액션 (중앙 버튼 2) ──
+        // ══════════════════════════════════════════════════════════════════
+        async function executeQrWorkplanGeneration() {
+            const selectedIndices = Array.from(selectedTbmSet);
+            if (selectedIndices.length === 0) {
+                alert('QR 작업계획서를 생성할 TBM 일지를 최소 1건 이상 선택해 주세요.');
+                return;
+            }
+
+            const selectedSessions = selectedIndices.map(idx => completedTbmSessions[idx]).filter(Boolean);
+
+            // ★ 영구 보존 원칙: QR 작업계획서를 영구보관 폴더에 100% 확정 생성 후 임시 파일 정리
+            try {
+                // 1. 선택된 모든 세션의 QR 작업계획서 영구 보존 생성 보장
+                const sessionIds = selectedSessions.map(s => s.id);
+                await fetch('/api/sessions/ensure-workplans', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: sessionIds })
+                });
+
+                // 2. 영구 보존 완결 후 임시 일일 작업계획서 정리
+                const cleanupItems = selectedSessions.map(s => ({
+                    workTitle: s.workTitle,
+                    fileName: s.fileName,
+                    teamName: s.teamName || currentTeam,
+                    yearMonth: currentWorkplanMonth
+                }));
+
+                await fetch('/api/workplan/cleanup-temp-after-qr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: cleanupItems })
+                });
+
+                // 1단계 접수된 작업계획서 목록에서도 해당 작업들 자동 제거
+                const targetTitles = selectedSessions.map(s => (s.workTitle || '').trim().toLowerCase());
+                receivedWorkplans = receivedWorkplans.filter(wp => {
+                    const wpTitle = (wp.title || '').trim().toLowerCase();
+                    return !targetTitles.some(t => t && (wpTitle.includes(t) || t.includes(wpTitle)));
+                });
+                selectedReceivedSet.clear();
+                renderReceivedWorkplans();
+                updateReceivedCountUI();
+
+                // sessionStorage 에서도 정리
+                sessionStorage.removeItem('completedWorkplans');
+                sessionStorage.removeItem('tbmTargetWorkplan');
+            } catch (e) {
+                console.warn('임시 작업계획서 자동 정리 오류:', e);
+            }
+
+            // 3단계 QR 목록 새로고침 및 스크롤 포커스
+            renderQrWorkplans();
+
+            const sec = document.getElementById('qrWorkplansSection');
+            if (sec) {
+                sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                sec.classList.add('ring-4', 'ring-cyan-400');
+                setTimeout(() => sec.classList.remove('ring-4', 'ring-cyan-400'), 1200);
+            }
+
+            showToastMessage(`🎉 QR작업계획서 ${selectedIndices.length}건이 완성되었습니다! (임시 일일계획서 자동 정리 완료)`);
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── 3단계: QR 작업계획서 목록 로직 (오른쪽) ──
+        // ══════════════════════════════════════════════════════════════════
+        function getVisibleQrSessions() {
+            return completedTbmSessions.filter(s => !hiddenQrSessionIds.has(s.id));
+        }
+
+        function renderQrWorkplans() {
+            const container = document.getElementById('qrWorkplansList');
+            const emptyEl = document.getElementById('qrWorkplansEmpty');
+            const totalEl = document.getElementById('qrTotalCount');
+            const restoreBtn = document.getElementById('btnRestoreHiddenQr');
+            const restoreText = document.getElementById('restoreHiddenQrText');
+            if (!container) return;
+
+            // 세션 중 화면에서 제외(숨김)되지 않은 항목만 표시 (영구 DB 보존)
+            const visibleItems = getVisibleQrSessions();
+
+            if (totalEl) totalEl.textContent = visibleItems.length;
+
+            if (restoreBtn && restoreText) {
+                if (hiddenQrSessionIds.size > 0) {
+                    restoreBtn.classList.remove('hidden');
+                    restoreText.textContent = `제외 ${hiddenQrSessionIds.size}건 다시 표시`;
+                } else {
+                    restoreBtn.classList.add('hidden');
+                }
+            }
+
+            if (visibleItems.length === 0) {
+                container.innerHTML = '';
+                if (emptyEl) emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyEl) emptyEl.classList.add('hidden');
+
+            container.innerHTML = visibleItems.map((session, idx) => {
+                const qrImgSrc = `/api/sessions/${session.id}/qr.png`;
+                const workplanDownloadUrl = `/api/sessions/${session.id}/workplan`;
+                const mobileUrl = `${window.location.origin}/m/${session.id}`;
+                const isChecked = selectedQrSet.has(idx);
+
+                return `
+                    <div onclick="toggleQrItem(${idx})" class="p-3 sm:p-3.5 rounded-2xl border ${isChecked ? 'border-teal-500 bg-teal-50/70 shadow-xs' : 'border-teal-200/90 bg-white hover:border-teal-400'} shadow-2xs transition-all space-y-2.5 cursor-pointer">
+                        <div class="flex items-start justify-between gap-3">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="event.stopPropagation(); toggleQrItem(${idx})" class="w-4 h-4 mt-1 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer shrink-0">
+
+                            <!-- QR 썸네일 (클릭 시 확대 모달) -->
+                            <div onclick="event.stopPropagation(); openQrModal('${session.id}', '${escapeHtml(session.workTitle || 'TBM')}', '${mobileUrl}')" class="w-16 h-16 bg-white p-1 rounded-xl border border-teal-200 shadow-3xs shrink-0 cursor-pointer hover:scale-105 transition-transform flex items-center justify-center group" title="QR 코드 크게 보기">
+                                <img src="${qrImgSrc}" alt="QR" class="w-full h-full object-contain">
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-800">${session.teamName || currentTeam}</span>
+                                    <span class="text-[10px] font-bold text-slate-500">📅 ${session.workDate || '-'}</span>
+                                </div>
+                                <h4 class="text-xs sm:text-sm font-black text-slate-900 mt-1 line-clamp-1">${escapeHtml(session.workTitle || session.fileName || 'QR 작업계획서')}</h4>
+                                <p class="text-[10px] text-slate-400 font-mono truncate mt-0.5">${escapeHtml(session.fileName || '')}</p>
+                            </div>
+
+                            <!-- 개별 QR 계획서 화면 제외 버튼 (영구 DB 보존) -->
+                            <button type="button" onclick="event.stopPropagation(); hideSingleQrSession('${session.id}', '${escapeHtml(session.workTitle || 'QR 계획서')}')" class="w-6 h-6 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer shrink-0" title="이 작업을 화면 목록에서 제외 (영구 DB 보존)">
+                                ✕
+                            </button>
+                        </div>
+
+                        <!-- 다운로드 및 모바일 링크 버튼 -->
+                        <div class="flex items-center gap-1.5 pt-2 border-t border-slate-100 justify-end flex-wrap">
+                            <button type="button" onclick="event.stopPropagation(); copyMobileLink('${mobileUrl}')" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                <span>📱</span> <span>모바일 링크</span>
+                            </button>
+                            <button type="button" onclick="event.stopPropagation(); blobDownloadFile('${workplanDownloadUrl}', '${escapeHtml(session.workTitle || '작업계획서')}_TBM.xlsx', this)" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-[11px] shadow-xs hover:shadow transition-all flex items-center gap-1 cursor-pointer active:scale-95">
+                                <span>📥</span> <span>계획서 다운로드</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ── 크롬/엣지/사내 보안 환경 완벽 호환 다운로드 (Blob + 네이티브 Direct Fallback) ──
+        async function blobDownloadFile(url, filename, btnEl) {
+            const originalHtml = btnEl ? btnEl.innerHTML : null;
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.classList.add('opacity-75');
+                btnEl.innerHTML = '<span class="animate-spin inline-block">⏳</span> 받는중...';
+            }
+
+            // 직접 다운로드 폴백 헬퍼 (사내 보안 정책/Blob 차단 시 브라우저 기본 엔진으로 우회)
+            const triggerDirectDownload = (dlUrl) => {
+                const sep = dlUrl.includes('?') ? '&' : '?';
+                const cleanDlUrl = `${dlUrl}${sep}download=1&_t=${Date.now()}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = cleanDlUrl;
+                document.body.appendChild(iframe);
+                setTimeout(() => {
+                    if (document.body.contains(iframe)) document.body.removeChild(iframe);
+                }, 6000);
+            };
+
+            try {
+                // 1차 시도: fetch + Blob 방식 (가장 매끄러운 UX)
+                const res = await fetch(url);
+                if (!res.ok) {
+                    throw new Error(`서버 응답 오류 (${res.status})`);
+                }
+                const blobData = await res.blob();
+                // MIME 타입을 명시적으로 지정한 새 Blob 생성 (크롬/엣지 안전하지 않은 다운로드 차단 우회)
+                const octetBlob = new Blob([blobData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const blobUrl = window.URL.createObjectURL(octetBlob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 2000);
+            } catch (err) {
+                console.warn('[다운로드] 1차 Blob 다운로드 실패, 2차 직접 다운로드 폴백 가동:', err);
+                try {
+                    // 2차 시도: 브라우저 네이티브 직접 다운로드 Fallback (크롬/엣지/사내 보안 100% 통과)
+                    triggerDirectDownload(url);
+                } catch (fallbackErr) {
+                    console.error('[다운로드] 최종 실패:', fallbackErr);
+                    showToastMessage('파일 다운로드 중 오류가 발생했습니다: ' + err.message, 'error');
+                }
+            } finally {
+                if (btnEl && originalHtml) {
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('opacity-75');
+                        btnEl.innerHTML = originalHtml;
+                    }, 600);
+                }
+            }
+        }
+
+        // 전체 QR 작업계획서 일괄 다운로드 (ZIP 원클릭 다운로드로 크롬/엣지 다중 다운로드 보안 차단 100% 해결)
+        async function downloadAllQrWorkplans() {
+            const visibleItems = getVisibleQrSessions();
+            if (visibleItems.length === 0) {
+                alert('다운로드할 QR 작업계획서가 없습니다.');
+                return;
+            }
+
+            // 1건인 경우 단일 다운로드
+            if (visibleItems.length === 1) {
+                const s = visibleItems[0];
+                return blobDownloadFile(`/api/sessions/${s.id}/workplan`, `${s.workTitle || '작업계획서'}_TBM.xlsx`, null);
+            }
+
+            // 2건 이상인 경우: ZIP 일괄 다운로드 (브라우저의 "여러 파일 다운로드 차단" 경고 0% 원천 방지)
+            const ids = visibleItems.map(s => s.id).join(',');
+            const zipUrl = `/api/sessions/batch-workplans.zip?ids=${encodeURIComponent(ids)}`;
+            const todayKst = new Date().toISOString().slice(0, 10);
+            const zipFilename = `[KMCI]_QR작업계획서_${visibleItems.length}건_${todayKst}.zip`;
+
+            showToastMessage(`총 ${visibleItems.length}건의 QR 작업계획서를 ZIP으로 일괄 다운로드합니다...`);
+            await blobDownloadFile(zipUrl, zipFilename, null);
+        }
+
+        // 모바일 서명 링크 복사
+        function copyMobileLink(url) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showToastMessage('📋 모바일 서명 링크가 클립보드에 복사되었습니다!');
+                }).catch(() => {
+                    prompt('아래 URL을 복사하여 현장 반장님께 전달하세요:', url);
+                });
+            } else {
+                prompt('아래 URL을 복사하여 현장 반장님께 전달하세요:', url);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── TBM 이력 기능 모달들 (상세 모달, QR 모달, PDF 뷰어) ──
+        // ══════════════════════════════════════════════════════════════════
+        async function openDetailModal(id) {
+            try {
+                const res = await fetch(`/api/sessions/${id}`);
+                if (!res.ok) throw new Error('세션 상세 정보를 불러오지 못했습니다.');
+                const data = await res.json();
+                currentModalSession = data;
+
+                const isCompleted = (data.status === '완료');
+                const badge = document.getElementById('modalStatusBadge');
+                if (badge) {
+                    badge.className = isCompleted ? 'text-xs font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded' : 'text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded';
+                    badge.innerText = isCompleted ? '✅ 서명 완료' : '⏳ 현장 서명 대기중';
+                }
+
+                if (document.getElementById('modalTeamBadge')) document.getElementById('modalTeamBadge').textContent = `🏢 ${data.teamName || currentTeam}`;
+                if (document.getElementById('modalWorkTitle')) document.getElementById('modalWorkTitle').textContent = data.workTitle || data.fileName || '작업계획서';
+                if (document.getElementById('modalWorkDate')) document.getElementById('modalWorkDate').textContent = data.workDate ? `작업 일시: ${data.workDate}` : '';
+                if (document.getElementById('modalTime')) document.getElementById('modalTime').textContent = data.createdAt ? new Date(data.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+
+                // 특보 및 화학물질
+                const alertBox = document.getElementById('modalAlertBox');
+                if (alertBox) {
+                    let alertHtml = '';
+                    if (data.weatherAlert) {
+                        alertHtml += `
+                            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-semibold flex items-center gap-2">
+                                <span>🚨</span> <span>기상 특보: ${escapeHtml(data.weatherAlert)}</span>
+                            </div>
+                        `;
+                    }
+                    if (data.chemicalHazard) {
+                        alertHtml += `
+                            <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 font-semibold flex items-center gap-2">
+                                <span>☣️</span> <span>화학물질 위험성: ${escapeHtml(data.chemicalHazard)}</span>
+                            </div>
+                        `;
+                    }
+                    alertBox.innerHTML = alertHtml;
+                }
+
+                // 핵심 수칙
+                const pointsList = document.getElementById('modalKeyPoints');
+                if (pointsList) {
+                    const points = data.points || [];
+                    pointsList.innerHTML = points.map(p => `
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-emerald-600 font-black">•</span>
+                            <span>${escapeHtml(p)}</span>
+                        </li>
+                    `).join('') || '<li class="text-slate-400">등록된 핵심 수칙이 없습니다.</li>';
+                }
+
+                // 대본 본문
+                if (document.getElementById('modalScript')) {
+                    document.getElementById('modalScript').textContent = data.script || '작성된 대본이 없습니다.';
+                }
+
+                // 서명 목록
+                const sigs = data.signatures || [];
+                if (document.getElementById('modalSignerCountBadge')) {
+                    document.getElementById('modalSignerCountBadge').textContent = `${sigs.length}명 참여`;
+                }
+                const sigList = document.getElementById('modalSignaturesList');
+                if (sigList) {
+                    if (sigs.length === 0) {
+                        sigList.innerHTML = `<div class="col-span-2 p-4 text-center text-xs text-slate-400 bg-white rounded-xl border border-slate-200">현장 서명이 아직 없습니다.</div>`;
+                    } else {
+                        sigList.innerHTML = sigs.map((s, idx) => `
+                            <div class="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2 shadow-3xs">
+                                <div>
+                                    <span class="font-bold text-slate-800">${escapeHtml(s.name)}</span>
+                                    <span class="text-[10px] text-slate-400 ml-1">${s.signedAt ? new Date(s.signedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                </div>
+                                ${s.imageDataUrl ? `<img src="${s.imageDataUrl}" alt="서명" class="h-7 w-16 object-contain">` : ''}
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                stopModalTts();
+                document.getElementById('detailModal').classList.remove('hidden');
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function closeDetailModal() {
+            stopModalTts();
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function openTbmPdfCurrent() {
+            if (currentModalSession && currentModalSession.id) {
+                openTbmPdf(currentModalSession.id);
+            }
+        }
+
+        function openTbmPdf(id) {
+            if (!id) return;
+            window.open(`/api/sessions/${id}/pdf`, '_blank');
+        }
+
+        function copyModalScript() {
+            const text = document.getElementById('modalScript')?.textContent;
+            if (text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToastMessage('📋 4분 안전 대본이 복사되었습니다!');
+                });
+            }
+        }
+
+        // 음성 낭독 (TTS) 제어
+        function toggleModalTts() {
+            if (modalSpeaking) {
+                stopModalTts();
+                return;
+            }
+            const text = document.getElementById('modalScript')?.textContent;
+            if (!text) return;
+            if (!('speechSynthesis' in window)) {
+                alert('현재 브라우저에서 음성 합성을 지원하지 않습니다.');
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'ko-KR';
+            utter.rate = 1.0;
+            utter.onend = () => stopModalTts();
+            utter.onerror = () => stopModalTts();
+            modalSpeaking = true;
+            const btn = document.getElementById('modalTtsBtn');
+            if (btn) btn.innerHTML = '<span>⏹️ 낭독 중지</span>';
+            window.speechSynthesis.speak(utter);
+        }
+
+        function stopModalTts() {
+            modalSpeaking = false;
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            const btn = document.getElementById('modalTtsBtn');
+            if (btn) btn.innerHTML = '<span>🔊 음성 낭독 (TTS)</span>';
+        }
+
+        // QR 확대 모달
+        function openQrModal(id, title, mobileUrl) {
+            currentQrUrl = mobileUrl;
+            document.getElementById('qrModalImg').src = `/api/sessions/${id}/qr.png`;
+            document.getElementById('qrModalTitle').textContent = title || 'TBM 작업계획서';
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function copyCurrentQrLink() {
+            if (currentQrUrl) copyMobileLink(currentQrUrl);
+        }
+
+        // 세션 삭제
+        async function deleteSessionItem(id, title) {
+            if (!confirm(`'${title}' 항목을 임시 작업장에서 삭제하시겠습니까?`)) return;
+            try {
+                const res = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || '삭제 권한이 없거나 실패했습니다.');
+                }
+                showToastMessage('임시 TBM 일지가 성공적으로 삭제되었습니다.');
+                await loadCompletedTbmSessions(true);
+            } catch (err) {
+                alert('삭제 안내: ' + err.message);
+            }
+        }
+
+        // 2단계 체크된 TBM 일지 일괄 삭제
+        async function deleteSelectedTbmSessions() {
+            const selectedIndices = Array.from(selectedTbmSet);
+            if (selectedIndices.length === 0) {
+                alert('삭제할 TBM 일지를 체크박스로 선택해 주세요.');
+                return;
+            }
+            if (!confirm(`선택한 ${selectedIndices.length}건의 TBM 일지를 삭제하시겠습니까?`)) return;
+
+            const targets = selectedIndices.map(i => completedTbmSessions[i]).filter(Boolean);
+            let successCount = 0;
+
+            for (const s of targets) {
+                try {
+                    const res = await fetch(`/api/sessions/${s.id}`, { method: 'DELETE' });
+                    if (res.ok) successCount++;
+                } catch (e) {}
+            }
+
+            selectedTbmSet.clear();
+            await loadCompletedTbmSessions(true);
+            showToastMessage(`총 ${successCount}건의 임시 TBM 일지가 삭제되었습니다.`);
+        }
+
+        // ── 3단계 체크 및 화면 제외 관리 (영구 DB 보존 원칙: 화면 목록에서만 제외) ──
+        let hiddenQrSessionIds = new Set(JSON.parse(sessionStorage.getItem('hiddenQrSessionIds') || '[]'));
+        let selectedQrSet = new Set();
+
+        function toggleQrItem(idx) {
+            if (selectedQrSet.has(idx)) {
+                selectedQrSet.delete(idx);
+            } else {
+                selectedQrSet.add(idx);
+            }
+            renderQrWorkplans();
+            updateQrCountUI();
+        }
+
+        function toggleQrSelectAll() {
+            const visibleItems = getVisibleQrSessions();
+            if (selectedQrSet.size === visibleItems.length && visibleItems.length > 0) {
+                selectedQrSet.clear();
+            } else {
+                visibleItems.forEach((_, idx) => selectedQrSet.add(idx));
+            }
+            renderQrWorkplans();
+            updateQrCountUI();
+        }
+
+        function updateQrCountUI() {
+            const visibleItems = getVisibleQrSessions();
+            const total = visibleItems.length;
+            const selCount = selectedQrSet.size;
+            const totalEl = document.getElementById('qrTotalCount');
+            const selEl = document.getElementById('qrSelectedCount');
+            if (totalEl) totalEl.textContent = total;
+            if (selEl) selEl.textContent = selCount;
+        }
+
+        // 3단계 개별 QR 작업계획서 화면 목록 제외 (영구 DB 보존)
+        function hideSingleQrSession(id, title) {
+            if (!confirm(`'${title}' QR 작업계획서를 화면 목록에서 제외하시겠습니까?\n(영구 보관 DB 파일은 안전하게 보존됩니다)`)) return;
+            hiddenQrSessionIds.add(id);
+            sessionStorage.setItem('hiddenQrSessionIds', JSON.stringify(Array.from(hiddenQrSessionIds)));
+            selectedQrSet.clear();
+            renderQrWorkplans();
+            updateQrCountUI();
+            showToastMessage('화면 목록에서 제외되었습니다 (영구 DB 보존)');
+        }
+
+        // 3단계 체크된 QR 작업계획서 일괄 화면 제외 (영구 DB 보존)
+        function hideSelectedQrSessionsFromScreen() {
+            const visibleItems = getVisibleQrSessions();
+            const selectedIndices = Array.from(selectedQrSet);
+            if (selectedIndices.length === 0) {
+                alert('제외할 QR 작업계획서를 체크박스로 선택해 주세요.');
+                return;
+            }
+            if (!confirm(`선택한 ${selectedIndices.length}건의 QR 작업계획서를 화면 목록에서 제외하시겠습니까?\n(영구 보관 DB 파일은 안전하게 보존됩니다)`)) return;
+
+            selectedIndices.forEach(idx => {
+                const s = visibleItems[idx];
+                if (s) hiddenQrSessionIds.add(s.id);
+            });
+            sessionStorage.setItem('hiddenQrSessionIds', JSON.stringify(Array.from(hiddenQrSessionIds)));
+            selectedQrSet.clear();
+            renderQrWorkplans();
+            updateQrCountUI();
+            showToastMessage(`선택한 ${selectedIndices.length}건이 화면 목록에서 제외되었습니다 (영구 DB 보존)`);
+        }
+
+        // 3단계 화면 제외 복원 (다시 표시)
+        function restoreHiddenQrSessions() {
+            hiddenQrSessionIds.clear();
+            sessionStorage.removeItem('hiddenQrSessionIds');
+            selectedQrSet.clear();
+            renderQrWorkplans();
+            updateQrCountUI();
+            showToastMessage('제외되었던 모든 QR 작업계획서가 다시 표시됩니다.');
+        }
+
+        // 진행률 모달 제어
+        function openBatchProgressModal(total, label) {
+            const modal = document.getElementById('batchProgressModal');
+            if (!modal) return;
+            document.getElementById('batchProgressTitle').textContent = `TBM 일괄 생성 (${label})`;
+            document.getElementById('batchProgressSubtitle').textContent = `총 ${total}건 표준서 분석 및 AI TBM 일지 자동 작성 중...`;
+            document.getElementById('batchProgressText').textContent = '작업 준비 중...';
+            document.getElementById('batchProgressPercent').textContent = '0%';
+            document.getElementById('batchProgressBar').style.width = '0%';
+            document.getElementById('batchProgressFooter').classList.add('hidden');
+            modal.classList.remove('hidden');
+        }
+
+        function updateBatchProgress(current, total, percent, title) {
+            const textEl = document.getElementById('batchProgressText');
+            const pctEl = document.getElementById('batchProgressPercent');
+            const barEl = document.getElementById('batchProgressBar');
+            if (textEl) textEl.textContent = title;
+            if (pctEl) pctEl.textContent = `${percent}%`;
+            if (barEl) barEl.style.width = `${percent}%`;
+        }
+
+        function finishBatchProgressModal(message) {
+            document.getElementById('batchProgressTitle').textContent = '🎉 작업 완료!';
+            document.getElementById('batchProgressSubtitle').textContent = message;
+            document.getElementById('batchProgressText').textContent = '완료되었습니다.';
+            document.getElementById('batchProgressPercent').textContent = '100%';
+            document.getElementById('batchProgressBar').style.width = '100%';
+            document.getElementById('batchProgressFooter').classList.remove('hidden');
+        }
+
+        function closeBatchProgressModal() {
+            document.getElementById('batchProgressModal').classList.add('hidden');
+        }
+
+        // 토스트 알림 유틸
+        function showToastMessage(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-2xl border border-emerald-500/40 backdrop-blur-md animate-bounce';
+            toast.innerHTML = `
+                <span class="text-emerald-400 font-bold text-sm">✓</span>
+                <span class="font-medium">${escapeHtml(msg)}</span>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('animate-bounce');
+                toast.style.transition = 'opacity 0.4s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>

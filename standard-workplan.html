@@ -1,0 +1,1227 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>표준 작업계획서 DB - 금호미쓰이화학(KMCI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f6f8fb;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .aurora-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .aurora-blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.6;
+            border-radius: 9999px;
+            animation: auroraFloat 18s ease-in-out infinite alternate;
+        }
+        .blob-1 {
+            top: -10%;
+            left: 15%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(167, 243, 208, 0.6) 0%, rgba(110, 231, 183, 0.25) 60%, transparent 80%);
+        }
+        .blob-2 {
+            top: 30%;
+            right: -5%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(186, 230, 253, 0.65) 0%, rgba(125, 211, 252, 0.25) 60%, transparent 80%);
+            animation-delay: -5s;
+        }
+        @keyframes auroraFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -25px) scale(1.06); }
+            100% { transform: translate(-20px, 20px) scale(0.96); }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+        }
+
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+    </style>
+</head>
+<body class="relative flex flex-col justify-between">
+    <!-- 배경 오로라 블롭 -->
+    <div class="aurora-bg">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2"></div>
+    </div>
+
+    <!-- ── 상단 글로벌 헤더 ── -->
+    <header class="w-full relative z-30 border-b border-emerald-200/80 bg-white/95 backdrop-blur-md sticky top-0 shadow-xs">
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 shrink-0 z-10">
+                <a href="./index.html" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 transition-all cursor-pointer border border-slate-200" title="워크플로 허브로 이동">
+                    <span>🏠</span>
+                    <span class="hidden sm:inline">메인 허브</span>
+                    <span class="sm:hidden">허브</span>
+                </a>
+                <div class="h-4 w-px bg-emerald-200 shrink-0"></div>
+                <a href="./index.html" class="flex items-center group cursor-pointer shrink-0" title="메인 순서도 허브로 이동">
+                    <img src="./logo.png" alt="금호미쓰이화학" class="h-5 sm:h-6 object-contain">
+                </a>
+            </div>
+
+            <!-- 상단 정가운데: 작업계획서&TBM Maker (글씨 크기 2배) -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-auto">
+                <a href="./index.html" class="text-xl sm:text-2xl font-black text-slate-900 hover:text-emerald-700 tracking-tight transition-colors whitespace-nowrap" title="메인 순서도 허브로 이동">
+                    작업계획서&TBM Maker
+                </a>
+            </div>
+        </div>
+        <!-- ── 5단계/6단계 작업 파이프라인 네비게이션 ── -->
+        <nav aria-label="작업 순서도" class="bg-gradient-to-r from-slate-50 via-emerald-50/30 to-slate-50 px-3 sm:px-6 py-2 overflow-x-auto scrollbar-thin border-b border-emerald-200/70">
+            <div id="flowNavContainer" class="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-[820px]">
+                <!-- Step 1: 표준 작업계획서 DB (현재 활성화) -->
+                <a href="./standard-workplan.html" id="flowStep1" class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">부서별 표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 일일 작업계획서 Maker -->
+                <a href="./workplan-maker.html" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200/90 bg-amber-50/80 hover:bg-amber-100 hover:border-amber-300 text-amber-950 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-amber-200 group-hover:bg-amber-300 text-amber-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-amber-700/80 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: TBM Maker -->
+                <a href="./tbm-maker.html" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate">TBM Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold shrink-0">QR배포</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 font-medium truncate">날씨·AI브리핑·QR</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM일지관리 -->
+                <a href="./history.html" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-slate-100 hover:border-slate-300 text-slate-700 transition-all cursor-pointer group text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-slate-300 text-slate-700 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate">TBM일지관리</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-bold shrink-0">전자서명</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: 최종 작업계획서 관리 -->
+                <a href="./admin.html" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate">최종 작업계획서 관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ── 메인 컨테이너 ── -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 flex-1 w-full">
+        <!-- 1. 헤더 타이틀 및 탐색기 경로 안내 바 -->
+        <div class="flex flex-col md:flex-row items-stretch gap-4">
+        <!-- 커스텀 팀 선택 드롭다운 (고급 글래스모피즘 & 부서별 배지) -->
+        <div class="relative w-fit min-w-[220px] h-[104px] shrink-0" id="teamDropdownContainer">
+            <select id="globalFlowTeamSelect" onchange="onGlobalFlowTeamChange(this.value)" class="hidden" title="소속 팀 변경">
+                <option value="생산1부">생산1부</option>
+                <option value="생산2부">생산2부</option>
+                <option value="공무팀">공무팀</option>
+                <option value="제품운영팀">제품운영팀</option>
+                <option value="경영지원팀">경영지원팀</option>
+            </select>
+            <button type="button" id="teamDropdownTrigger" onclick="toggleCustomTeamDropdown()" class="w-full h-full flex items-center justify-between gap-3.5 bg-gradient-to-br from-white/95 via-emerald-50/70 to-emerald-100/50 hover:from-white hover:to-emerald-100/80 border-2 border-emerald-500 hover:border-emerald-600 rounded-2xl px-5 py-3.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group text-left">
+                <div class="flex flex-col min-w-0">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700/80 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        현재 선택 부서
+                    </span>
+                    <span id="currentTeamDisplay" class="text-2xl sm:text-[28px] font-black text-emerald-950 tracking-tight leading-tight mt-0.5 group-hover:text-emerald-800 transition-colors">
+                        생산1부
+                    </span>
+                </div>
+                <div class="w-8 h-8 rounded-xl bg-emerald-100/80 border border-emerald-300/80 text-emerald-800 flex items-center justify-center shrink-0 shadow-3xs group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                    <svg id="teamDropdownArrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </button>
+
+            <!-- 드롭다운 메뉴 레이어 -->
+            <div id="teamDropdownMenu" class="hidden absolute top-[calc(100%+8px)] left-0 w-72 bg-white/95 backdrop-blur-xl border border-emerald-200/90 rounded-2xl shadow-xl shadow-emerald-950/10 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 space-y-1">
+                <div class="px-3 py-1.5 text-[11px] font-extrabold text-slate-600 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
+                    <span>소속 부서 변경</span>
+                    <span class="text-[10px] text-emerald-600 font-bold">5개 부서</span>
+                </div>
+                <div class="space-y-1 pt-1" id="teamOptionsList">
+                    <button type="button" onclick="selectCustomTeam('생산1부')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="생산1부">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🏢</span>
+                            <div>
+                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">생산1부</p>
+                                <p class="text-[10px] text-slate-600 font-normal">1공장 운전관리</p>
+                            </div>
+                        </div>
+                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                    </button>
+                    <button type="button" onclick="selectCustomTeam('생산2부')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="생산2부">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🏭</span>
+                            <div>
+                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">생산2부</p>
+                                <p class="text-[10px] text-slate-600 font-normal">2공장 운전관리</p>
+                            </div>
+                        </div>
+                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                    </button>
+                    <button type="button" onclick="selectCustomTeam('공무팀')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="공무팀">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">🔧</span>
+                            <div>
+                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">공무팀</p>
+                                <p class="text-[10px] text-slate-600 font-normal">기계·전기·계기·배관 정비</p>
+                            </div>
+                        </div>
+                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                    </button>
+                    <button type="button" onclick="selectCustomTeam('제품운영팀')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="제품운영팀">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">📦</span>
+                            <div>
+                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">제품운영팀</p>
+                                <p class="text-[10px] text-slate-600 font-normal">출하·포장·제품 관리</p>
+                            </div>
+                        </div>
+                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                    </button>
+                    <button type="button" onclick="selectCustomTeam('경영지원팀')" class="team-option-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-all font-bold text-sm text-left group/opt cursor-pointer" data-team="경영지원팀">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-100/80 text-emerald-800 flex items-center justify-center text-xs group-hover/opt:bg-emerald-500 group-hover/opt:text-white transition-all">💼</span>
+                            <div>
+                                <p class="font-black text-xs sm:text-sm text-slate-900 group-hover/opt:text-emerald-900 leading-snug">경영지원팀</p>
+                                <p class="text-[10px] text-slate-600 font-normal">총무·물류 운영·지원</p>
+                            </div>
+                        </div>
+                        <span class="team-check text-emerald-600 font-black text-sm hidden">✓</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <section class="glass-card rounded-3xl p-6 sm:p-7 space-y-4 flex-1 min-h-[104px]">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-xs font-extrabold">사내 표준 작업계획서 DB</span>
+                        <span id="teamStandardBadge" class="text-xs font-medium text-slate-600">부서별 표준 작업계획서 기준자료</span>
+                    </div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>📚 표준 작업계획서 DB 게시판</span>
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-600">
+                        일일 작업계획서 자동 작성 및 매칭의 기준이 되는 부서별 표준 작업계획서 파일을 열람하고 다운로드할 수 있습니다.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <button onclick="refreshData()" class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all shadow-2xs flex items-center gap-1.5">
+                        <span id="refreshSpinner" class="inline-block">🔄</span>
+                        <span>새로고침</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+        </div>
+
+        <!-- 2. 부서별 하위 폴더(카테고리) 요약 통계 칩스 (실시간 동적 렌더링) -->
+        <section id="categoryChipsContainer" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <button onclick="filterCategory('전체')" class="cat-pill glass-card px-4 py-2.5 rounded-xl border text-left transition-all hover:scale-[1.02] active:scale-95 border-emerald-400 bg-emerald-50/80 shadow-2xs shrink-0 cursor-pointer" data-category="전체">
+                <div class="text-[11px] font-bold text-slate-600 flex items-center gap-1.5">
+                    <span>📑 전체</span>
+                    <span id="stat-total" class="text-emerald-800 font-black">0건</span>
+                </div>
+            </button>
+        </section>
+
+        <!-- 3. 게시판 컨트롤 바 (검색 + 선택상태/액션 + 뷰 전환) -->
+        <section class="glass-card rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="relative flex-1 max-w-md">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="작업명, 설비명, 키워드 검색 (예: 펌프, 밸브, 화기, 밀폐...)" class="w-full pl-10 pr-4 py-1.5 sm:py-2 bg-white/90 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder:text-slate-400" />
+            </div>
+
+            <div class="flex items-center gap-2.5 justify-between md:justify-end text-xs flex-wrap">
+                <!-- 선택 시에만 살짝 표시되는 콤팩트 인라인 액션 그룹 (화면 덜컹거림 최소화) -->
+                <div id="selectionActionBar" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 animate-in fade-in duration-150">
+                    <span class="text-xs font-bold text-emerald-900">
+                        <strong id="selectionCount" class="text-emerald-700 font-black">0</strong>건 선택
+                    </span>
+                    <button type="button" onclick="clearAllSelections()" class="px-1.5 py-0.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:bg-white rounded transition-colors" title="선택 해제">
+                        ✕ 해제
+                    </button>
+                    <div class="w-px h-3.5 bg-emerald-200 mx-0.5"></div>
+                    <button type="button" onclick="sendToMaker()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-xs hover:shadow transition-all flex items-center gap-1 active:scale-95">
+                        <span>🚀 Maker로 (<span id="selectionCountBtn">0</span>)</span>
+                    </button>
+                </div>
+
+                <span class="text-slate-500 font-medium">
+                    총 <strong id="matchedCount" class="text-emerald-700 font-bold">0</strong>건
+                </span>
+
+                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button id="btnViewTable" onclick="setViewMode('table')" class="px-2.5 py-1 rounded-lg font-bold bg-white text-slate-800 shadow-2xs transition-all flex items-center gap-1">
+                        <span>📑 목록형</span>
+                    </button>
+                    <button id="btnViewCard" onclick="setViewMode('card')" class="px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-800 transition-all flex items-center gap-1">
+                        <span>🗂️ 카드형</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 게시판 데이터 뷰 (테이블 뷰 / 카드 뷰) -->
+        <section id="tableContainer" class="glass-card rounded-3xl overflow-hidden shadow-xs border border-slate-200/80">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-bold uppercase tracking-wider">
+                            <th class="py-3 px-4 w-10 text-center">
+                                <input type="checkbox" id="checkAllTable" onchange="toggleSelectAll(this.checked)" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" title="전체 선택/해제">
+                            </th>
+                            <th class="py-3 px-4 w-12 text-center">번호</th>
+                            <th class="py-3 px-4 w-36">하위 폴더(공정)</th>
+                            <th class="py-3 px-4">표준 작업명</th>
+                            <th class="py-3 px-4 w-60 hidden md:table-cell">실제 파일명</th>
+                            <th class="py-3 px-4 w-20 text-center hidden sm:table-cell">크기</th>
+                            <th class="py-3 px-4 w-32 text-center hidden lg:table-cell">최종 갱신일</th>
+                            <th class="py-3 px-4 w-28 text-center">다운로드</th>
+                        </tr>
+                    </thead>
+                    <tbody id="boardTableBody" class="divide-y divide-slate-100 text-slate-700">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 카드 뷰 (기본 hidden) -->
+        <section id="cardContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- 동적 렌더링 -->
+        </section>
+    </main>
+
+    <!-- ── 하단 플로팅 선택 액션 바 (미니멀 컴팩트 디자인) ── -->
+    <div id="floatingSelectionBar" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-3" style="">
+        <div class="bg-slate-900/90 hover:bg-slate-900 backdrop-blur-md text-white rounded-full pl-3.5 pr-2 py-1.5 shadow-xl border border-white/10 flex items-center gap-2.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-xs font-bold text-slate-200">
+                <strong id="floatingCount" class="text-emerald-400 font-black">0</strong>건 선택됨
+            </span>
+            <button type="button" onclick="clearAllSelections()" class="px-2 py-1 text-[11px] font-semibold text-slate-400 hover:text-white rounded-full hover:bg-white/10 transition-colors" title="선택 해제">
+                해제
+            </button>
+            <button type="button" onclick="sendToMaker()" class="px-3.5 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition-all hover:scale-105 active:scale-95 flex items-center gap-1 cursor-pointer">
+                <span>Maker로 이동</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── 하단 카피라이트 ── -->
+    <footer class="relative z-10 py-6 text-center text-xs text-slate-600 border-t border-slate-200/60 bg-white/40 mt-12">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-center gap-2">
+            <div>금호미쓰이화학(KMCI) 안전환경팀 &middot; 표준 작업계획서 종합 DB</div>
+        </div>
+    </footer>
+
+    <!-- ── 프론트엔드 로직 ── -->
+    <script>
+        let allReferenceFiles = [];
+        let filteredFiles = [];
+        let currentCategory = "전체";
+        let searchQuery = "";
+        let viewMode = "table"; // "table" | "card"
+
+        // ── 선택 상태 관리 ──
+        let selectedFiles = new Set(); // Set<filename>
+
+        const CATEGORY_COLORS = {
+            "공통": { bg: "bg-slate-100", text: "text-slate-800", border: "border-slate-300" },
+            "기계": { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-300" },
+            "배관": { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
+            "전기": { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-300" },
+            "계기": { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-300" },
+            "영선": { bg: "bg-rose-100", text: "text-rose-800", border: "border-rose-300" },
+        };
+
+        let currentTeam = '생산1부';
+
+        async function init() {
+            const team = new URLSearchParams(window.location.search).get('team') || sessionStorage.getItem('selectedTeam') || localStorage.getItem('kmci_current_team') || '생산1부';
+            currentTeam = team;
+            updateFlowStepLinks(team);
+            const title = document.querySelector('title');
+            if (title) title.textContent = `[${team}] 표준 작업계획서 DB - 금호미쓰이화학`;
+
+            // 기존 선택 파일 복원 (1단계에 이미 담긴 작업 항목 누적 보존)
+            try {
+                const raw = sessionStorage.getItem('makerSelectedStandards') || localStorage.getItem('makerSelectedStandards');
+                const savedTeam = sessionStorage.getItem('makerFromTeam') || localStorage.getItem('makerFromTeam');
+                if (raw && (!savedTeam || savedTeam === currentTeam)) {
+                    const list = JSON.parse(raw);
+                    if (Array.isArray(list)) {
+                        list.forEach(item => {
+                            if (item && item.filename) selectedFiles.add(item.filename);
+                        });
+                    }
+                }
+            } catch (_) {}
+
+            await refreshData(team);
+            updateSelectionUI();
+            syncHeaderCheckbox();
+        }
+
+        function onGlobalFlowTeamChange(team) {
+            if (!team) return;
+            currentTeam = team;
+            try {
+                localStorage.setItem('kmci_current_team', team);
+                sessionStorage.setItem('selectedTeam', team);
+            } catch (_) {}
+            const url = new URL(window.location);
+            url.searchParams.set('team', team);
+            window.history.replaceState({}, '', url.toString());
+            updateFlowStepLinks(team);
+            const title = document.querySelector('title');
+            if (title) title.textContent = `[${team}] 표준 작업계획서 DB - 금호미쓰이화학`;
+
+            // 카테고리 필터 및 검색어 초기화
+            currentCategory = "전체";
+            searchQuery = "";
+            const searchInput = document.getElementById("searchInput");
+            if (searchInput) searchInput.value = "";
+
+            // 선택 파일 초기화 및 해당 팀 기존 선택 복원
+            selectedFiles.clear();
+            try {
+                const raw = sessionStorage.getItem('makerSelectedStandards') || localStorage.getItem('makerSelectedStandards');
+                const savedTeam = sessionStorage.getItem('makerFromTeam') || localStorage.getItem('makerFromTeam');
+                if (raw && savedTeam === team) {
+                    const list = JSON.parse(raw);
+                    if (Array.isArray(list)) {
+                        list.forEach(item => {
+                            if (item && item.filename) selectedFiles.add(item.filename);
+                        });
+                    }
+                }
+            } catch (_) {}
+            updateSelectionUI();
+
+            refreshData(team);
+        }
+
+        function updateFlowStepLinks(team) {
+            const targetTeam = team || currentTeam || sessionStorage.getItem('selectedTeam') || '생산1부';
+            const sel = document.getElementById('globalFlowTeamSelect');
+            if (sel && sel.value !== targetTeam) sel.value = targetTeam;
+            
+            const displayEl = document.getElementById('currentTeamDisplay');
+            if (displayEl) displayEl.textContent = targetTeam;
+
+            document.querySelectorAll('#teamOptionsList .team-option-btn').forEach(btn => {
+                const optTeam = btn.getAttribute('data-team');
+                const isSelected = optTeam === targetTeam;
+                const checkEl = btn.querySelector('.team-check');
+                if (isSelected) {
+                    btn.classList.add('bg-emerald-50', 'text-emerald-950', 'font-black');
+                    btn.classList.remove('text-slate-800');
+                    if (checkEl) checkEl.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('bg-emerald-50', 'text-emerald-950', 'font-black');
+                    btn.classList.add('text-slate-800');
+                    if (checkEl) checkEl.classList.add('hidden');
+                }
+            });
+
+            // 공무팀 6단계 vs 타 부서 5단계 플로우 바 동적 렌더링
+            renderPipelineNav(targetTeam);
+
+            const teamBadge = document.getElementById('teamStandardBadge');
+            if (teamBadge) {
+                teamBadge.textContent = `${targetTeam} 표준 작업계획서 기준자료`;
+            }
+        }
+
+        function renderPipelineNav(targetTeam) {
+            const container = document.getElementById('flowNavContainer');
+            if (!container) return;
+
+            if (targetTeam === '공무팀') {
+                container.innerHTML = `
+                <!-- Step 1: 일일 위험성평가 -->
+                <a href="/daily-risk?team=공무팀" id="flowStep1" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🛡️</span>
+                            <span class="text-xs font-black truncate">일일 위험성평가</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">당일 위험성평가 열람</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 표준 작업계획서 DB (현재 활성화) -->
+                <a href="/standard-workplan?team=공무팀" id="flowStep2" class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">부서별 표준 작업계획서</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: 일일 작업계획서 Maker -->
+                <a href="/workplan-maker?team=공무팀" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM Maker -->
+                <a href="/tbm-maker?team=공무팀" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate">TBM Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">날씨·AI브리핑·QR</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: TBM일지관리 -->
+                <a href="/history?team=공무팀" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-slate-100 hover:border-slate-300 text-slate-700 transition-all cursor-pointer group text-left" title="5단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-slate-300 text-slate-700 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate">TBM일지관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 6: 최종 작업계획서 관리 -->
+                <a href="/admin?team=공무팀" id="flowStep6" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="6단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">6</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate">최종 작업계획서 관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+                `;
+            } else {
+                container.innerHTML = `
+                <!-- Step 1: 표준 작업계획서 DB (현재 활성화) -->
+                <a href="/standard-workplan?team=${encodeURIComponent(targetTeam)}" id="flowStep1" class="flex-1 min-w-[160px] flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black shadow-md shadow-emerald-700/25 ring-2 ring-emerald-400 border border-emerald-500 cursor-default text-left">
+                    <span class="w-6 h-6 rounded-full bg-white text-emerald-800 text-xs font-black flex items-center justify-center shrink-0 shadow-2xs">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📚</span>
+                            <span class="text-xs font-black truncate">표준 작업계획서 DB</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-extrabold shrink-0">현재 위치</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-100 font-medium truncate">부서별 표준 작업계획서 모음</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-emerald-400 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 2: 일일 작업계획서 Maker -->
+                <a href="/workplan-maker?team=${encodeURIComponent(targetTeam)}" id="flowStep2" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200/90 bg-amber-50/80 hover:bg-amber-100 hover:border-amber-300 text-amber-950 font-bold shadow-2xs hover:shadow-md transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-amber-200 group-hover:bg-amber-300 text-amber-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">2</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✨</span>
+                            <span class="text-xs font-black truncate">일일 작업계획서 Maker</span>
+                            <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-200 text-amber-900 font-bold shrink-0">원클릭</span>
+                        </div>
+                        <p class="text-[10px] text-amber-700/80 font-medium truncate">AI 일일계획서 자동작성</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 3: TBM Maker -->
+                <a href="/tbm-maker?team=${encodeURIComponent(targetTeam)}" id="flowStep3" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">3</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">🎯</span>
+                            <span class="text-xs font-black truncate">TBM Maker</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 font-medium truncate">날씨·AI브리핑·QR</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 4: TBM일지관리 -->
+                <a href="/history?team=${encodeURIComponent(targetTeam)}" id="flowStep4" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-slate-100 hover:border-slate-300 text-slate-700 transition-all cursor-pointer group text-left" title="4단계: 팀별 전자서명 완료 여부 및 명부 확인">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-slate-300 text-slate-700 text-xs font-black flex items-center justify-center shrink-0 transition-colors">4</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">✍️</span>
+                            <span class="text-xs font-black truncate">TBM일지관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 font-medium truncate">서명 완료 & 명부 확인</p>
+                    </div>
+                </a>
+
+                <div class="shrink-0 text-slate-300 flex items-center justify-center px-0.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Step 5: 최종 작업계획서 관리 -->
+                <a href="/admin?team=${encodeURIComponent(targetTeam)}" id="flowStep5" class="flex-1 min-w-[150px] flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white/90 hover:bg-emerald-50/70 hover:border-emerald-300 text-slate-700 hover:text-emerald-900 transition-all cursor-pointer group text-left" title="5단계: 최종 작업계획서 관리 (QR계획서 보관 & 이력)">
+                    <span class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-emerald-200 text-slate-700 group-hover:text-emerald-900 text-xs font-black flex items-center justify-center shrink-0 transition-colors">5</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm">📑</span>
+                            <span class="text-xs font-black truncate">최종 작업계획서 관리</span>
+                        </div>
+                        <p class="text-[10px] text-slate-600 font-medium truncate">QR계획서 보관 & 이력</p>
+                    </div>
+                </a>
+                `;
+            }
+        }
+
+        function toggleCustomTeamDropdown() {
+            const menu = document.getElementById('teamDropdownMenu');
+            const arrow = document.getElementById('teamDropdownArrow');
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                if (arrow) arrow.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                if (arrow) arrow.classList.remove('rotate-180');
+            }
+        }
+
+        function closeCustomTeamDropdown() {
+            const menu = document.getElementById('teamDropdownMenu');
+            const arrow = document.getElementById('teamDropdownArrow');
+            if (menu) menu.classList.add('hidden');
+            if (arrow) arrow.classList.remove('rotate-180');
+        }
+
+        function selectCustomTeam(team) {
+            closeCustomTeamDropdown();
+            onGlobalFlowTeamChange(team);
+        }
+
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('teamDropdownContainer');
+            if (container && !container.contains(e.target)) {
+                closeCustomTeamDropdown();
+            }
+        });
+
+        async function refreshData(teamParam) {
+            const spinner = document.getElementById("refreshSpinner");
+            if (spinner) spinner.classList.add("animate-spin");
+
+            try {
+                const team = teamParam || currentTeam || new URLSearchParams(window.location.search).get('team') || sessionStorage.getItem('selectedTeam') || localStorage.getItem('kmci_current_team') || '생산1부';
+                const res = await fetch(`/api/standard-workplan/list?team=${encodeURIComponent(team)}`);
+                if (!res.ok) throw new Error("표준 작업계획서 목록을 불러오지 못했습니다.");
+                const data = await res.json();
+                
+                // 데이터 정규화
+                allReferenceFiles = data.all_files || [];
+                if (!allReferenceFiles.length && data.categories) {
+                    allReferenceFiles = [];
+                    for (const [catName, catObj] of Object.entries(data.categories)) {
+                        for (const f of (catObj.files || [])) {
+                            allReferenceFiles.push({
+                                ...f,
+                                category: catName,
+                                subfolder: catObj.subfolder || catName
+                            });
+                        }
+                    }
+                }
+
+                // 부서별 하위 폴더(카테고리) 칩 동적 렌더링
+                renderDynamicCategoryChips(data.categories || {});
+                applyFilters();
+            } catch (err) {
+                console.error(err);
+                alert("표준 작업계획서 DB 목록을 불러오지 못했습니다: " + err.message);
+            } finally {
+                if (spinner) spinner.classList.remove("animate-spin");
+            }
+        }
+
+        function renderDynamicCategoryChips(categories) {
+            const container = document.getElementById("categoryChipsContainer");
+            if (!container) return;
+
+            const totalCount = allReferenceFiles.length;
+            container.innerHTML = `
+                <button onclick="filterCategory('전체')" class="cat-pill glass-card px-4 py-2.5 rounded-xl border text-left transition-all hover:scale-[1.02] active:scale-95 ${currentCategory === '전체' ? 'border-emerald-400 bg-emerald-50/80 shadow-2xs font-black' : 'border-slate-200 font-semibold'} shrink-0 cursor-pointer" data-category="전체">
+                    <div class="text-[11px] flex items-center gap-1.5 ${currentCategory === '전체' ? 'text-emerald-900' : 'text-slate-700'}">
+                        <span>📑 전체</span>
+                        <span class="text-xs ${currentCategory === '전체' ? 'text-emerald-800 font-black' : 'text-slate-500'}">(${totalCount}건)</span>
+                    </div>
+                </button>
+            `;
+
+            for (const [catName, catInfo] of Object.entries(categories)) {
+                const isSelected = currentCategory === catName;
+                const subLabel = catInfo.subfolder || catName;
+                const count = catInfo.count || 0;
+
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.onclick = () => filterCategory(catName);
+                btn.className = `cat-pill glass-card px-3.5 py-2.5 rounded-xl border text-left transition-all hover:scale-[1.02] active:scale-95 shrink-0 cursor-pointer ${
+                    isSelected 
+                        ? 'border-emerald-400 bg-emerald-50/80 shadow-2xs font-black ring-1 ring-emerald-300' 
+                        : 'border-slate-200 hover:border-emerald-300 font-semibold bg-white/80'
+                }`;
+                btn.setAttribute("data-category", catName);
+                btn.innerHTML = `
+                    <div class="text-[11px] flex items-center gap-1.5 ${isSelected ? 'text-emerald-950 font-black' : 'text-slate-700'}">
+                        <span class="truncate max-w-[150px]">📁 ${escapeHtml(subLabel)}</span>
+                        <span class="text-xs ${isSelected ? 'text-emerald-800 font-black' : 'text-slate-500'}">(${count})</span>
+                    </div>
+                `;
+                container.appendChild(btn);
+            }
+        }
+
+        function filterCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll(".cat-pill").forEach(btn => {
+                const bCat = btn.getAttribute("data-category");
+                if (bCat === cat) {
+                    btn.classList.add("border-emerald-400", "bg-emerald-50/80", "shadow-2xs", "font-black", "ring-1", "ring-emerald-300");
+                    btn.classList.remove("border-slate-200", "bg-white/80");
+                } else {
+                    btn.classList.remove("border-emerald-400", "bg-emerald-50/80", "shadow-2xs", "font-black", "ring-1", "ring-emerald-300");
+                    btn.classList.add("border-slate-200", "bg-white/80");
+                }
+            });
+            applyFilters();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val.trim().toLowerCase();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            filteredFiles = allReferenceFiles.filter(item => {
+                const matchCat = (currentCategory === "전체") || (item.category === currentCategory) || (item.subfolder === currentCategory);
+                if (!matchCat) return false;
+
+                if (!searchQuery) return true;
+                const hay = `${item.title || ''} ${item.filename || ''} ${item.category || ''} ${item.subfolder || ''} ${item.raw_title || ''}`.toLowerCase();
+                return hay.includes(searchQuery);
+            });
+
+            const countEl = document.getElementById("matchedCount");
+            if (countEl) countEl.innerText = filteredFiles.length;
+            renderView();
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            const btnTable = document.getElementById("btnViewTable");
+            const btnCard = document.getElementById("btnViewCard");
+            const tableCont = document.getElementById("tableContainer");
+            const cardCont = document.getElementById("cardContainer");
+
+            if (mode === "table") {
+                btnTable.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-slate-800 shadow-2xs transition-all flex items-center gap-1";
+                btnCard.className = "px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-800 transition-all flex items-center gap-1";
+                tableCont.classList.remove("hidden");
+                cardCont.classList.add("hidden");
+            } else {
+                btnCard.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-slate-800 shadow-2xs transition-all flex items-center gap-1";
+                btnTable.className = "px-2.5 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-800 transition-all flex items-center gap-1";
+                cardCont.classList.remove("hidden");
+                tableCont.classList.add("hidden");
+            }
+            renderView();
+        }
+
+        function renderView() {
+            if (viewMode === "table") {
+                renderTable();
+            } else {
+                renderCards();
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("boardTableBody");
+            if (!filteredFiles.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="py-12 text-center text-slate-400 font-medium">
+                            검색 조건에 일치하는 표준 작업계획서 파일이 없습니다.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredFiles.map((f, idx) => {
+                const subLabel = f.subfolder || f.category || "공통";
+                const safeName = escapeHtml(f.filename);
+                const safeTitle = escapeHtml(f.title || f.filename.replace('.xlsx', ''));
+                const isChecked = selectedFiles.has(f.filename);
+                return `
+                    <tr class="hover:bg-emerald-50/40 transition-colors ${isChecked ? 'bg-emerald-50/60 border-l-4 border-l-emerald-500' : ''}" id="tableRow_${escapeAttr(f.filename)}">
+                        <td class="py-3 px-4 text-center">
+                            <input type="checkbox" data-filename="${escapeAttr(f.filename)}" onchange="toggleFileSelection('${escapeAttr(f.filename)}', this.checked)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                        </td>
+                        <td class="py-3 px-4 text-center font-mono text-slate-500 font-semibold">${idx + 1}</td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200/90 shadow-3xs whitespace-nowrap" title="${escapeHtml(subLabel)}">
+                                <span>📁</span>
+                                <span>${escapeHtml(subLabel)}</span>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 cursor-pointer" onclick="toggleFileSelection('${escapeAttr(f.filename)}', !selectedFiles.has('${escapeAttr(f.filename)}'))">
+                            <span class="font-black text-slate-900 block leading-tight text-xs sm:text-sm hover:text-emerald-700 transition-colors" title="${safeTitle}">${safeTitle}</span>
+                            <span class="text-[10px] text-slate-400 font-mono block mt-0.5 md:hidden truncate max-w-xs">${safeName}</span>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-500 hidden md:table-cell truncate max-w-xs" title="${safeName}">
+                            ${safeName}
+                        </td>
+                        <td class="py-3 px-4 text-center text-slate-600 font-mono text-[11px] hidden sm:table-cell">
+                            ${f.size || "-"}
+                        </td>
+                        <td class="py-3 px-4 text-center text-slate-600 font-mono text-[11px] hidden lg:table-cell">
+                            ${f.mtime ? f.mtime.slice(0, 16) : "-"}
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button type="button" onclick="downloadStandardFile('${escapeAttr(f.filename)}', this)" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-[11px] shadow-xs hover:shadow transition-all whitespace-nowrap cursor-pointer" title="${safeName} 엑셀 다운로드">
+                                <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                                <span>다운로드</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        function renderCards() {
+            const cardCont = document.getElementById("cardContainer");
+            if (!filteredFiles.length) {
+                cardCont.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400 font-medium">
+                        검색 조건에 일치하는 표준 작업계획서 파일이 없습니다.
+                    </div>
+                `;
+                return;
+            }
+
+            cardCont.innerHTML = filteredFiles.map((f, idx) => {
+                const subLabel = f.subfolder || f.category || "공통";
+                const safeName = escapeHtml(f.filename);
+                const safeTitle = escapeHtml(f.title || f.filename.replace('.xlsx', ''));
+                const isChecked = selectedFiles.has(f.filename);
+                return `
+                    <div class="glass-card rounded-2xl p-5 border transition-all hover:shadow-md space-y-3 flex flex-col justify-between ${isChecked ? 'border-emerald-500 ring-2 ring-emerald-400/50 bg-emerald-50/60 shadow-md' : 'border-slate-200/90 hover:border-emerald-400'}" id="cardItem_${escapeAttr(f.filename)}">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    📁 ${escapeHtml(subLabel)}
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] text-slate-500 font-mono">${f.size || ""}</span>
+                                    <label class="flex items-center gap-1.5 cursor-pointer select-none group">
+                                        <input type="checkbox" data-filename="${escapeAttr(f.filename)}" onchange="toggleFileSelection('${escapeAttr(f.filename)}', this.checked)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                        <span class="text-[11px] font-bold text-slate-600 group-hover:text-emerald-700 transition-colors">${isChecked ? '✅ 선택됨' : '선택'}</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <h4 class="text-sm font-black text-slate-900 leading-snug line-clamp-2 hover:text-emerald-700 transition-colors cursor-pointer" title="${safeTitle}" onclick="toggleFileSelection('${escapeAttr(f.filename)}', !selectedFiles.has('${escapeAttr(f.filename)}'))">
+                                ${safeTitle}
+                            </h4>
+                            <p class="text-[11px] text-slate-500 font-mono truncate" title="${safeName}">
+                                📄 ${safeName}
+                            </p>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-100 flex items-center gap-2">
+                            <button type="button" onclick="toggleFileSelection('${escapeAttr(f.filename)}', !selectedFiles.has('${escapeAttr(f.filename)}'))" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border ${isChecked ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800'}" id="selectCardBtn_${escapeAttr(f.filename)}">
+                                ${isChecked ? '✅ 선택됨 (클릭하여 해제)' : '☑ Maker에 추가'}
+                            </button>
+                            <button type="button" onclick="downloadStandardFile('${escapeAttr(f.filename)}', this)" class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-bold text-xs shadow-xs border border-slate-200 hover:shadow transition-all whitespace-nowrap cursor-pointer" title="엑셀 파일 다운로드">
+                                <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                                <span>저장</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+
+        // ── 선택 관리 함수들 ──
+        function toggleFileSelection(filename, checked) {
+            if (checked) {
+                selectedFiles.add(filename);
+            } else {
+                selectedFiles.delete(filename);
+            }
+            updateSelectionUI();
+            // 해당 row/card UI 상태 즉시 갱신
+            if (viewMode === 'table') {
+                const row = document.getElementById(`tableRow_${filename}`);
+                const cb = document.querySelector(`input[data-filename="${CSS.escape(filename)}"]`);
+                if (row) {
+                    if (checked) {
+                        row.classList.add('bg-emerald-50/60', 'border-l-4', 'border-l-emerald-500');
+                    } else {
+                        row.classList.remove('bg-emerald-50/60', 'border-l-4', 'border-l-emerald-500');
+                    }
+                }
+                if (cb) cb.checked = checked;
+            } else {
+                // 카드 뷰 갱신은 re-render
+                renderCards();
+            }
+            // 헤더 체크박스 동기화
+            syncHeaderCheckbox();
+        }
+
+        function toggleSelectAll(checked) {
+            filteredFiles.forEach(f => {
+                if (checked) selectedFiles.add(f.filename);
+                else selectedFiles.delete(f.filename);
+            });
+            updateSelectionUI();
+            renderView();
+        }
+
+        function clearAllSelections() {
+            selectedFiles.clear();
+            updateSelectionUI();
+            renderView();
+        }
+
+        function syncHeaderCheckbox() {
+            const allChecked = filteredFiles.length > 0 && filteredFiles.every(f => selectedFiles.has(f.filename));
+            const someChecked = filteredFiles.some(f => selectedFiles.has(f.filename));
+            ['checkAllTable', 'checkAllItems'].forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb) {
+                    cb.checked = allChecked;
+                    cb.indeterminate = !allChecked && someChecked;
+                }
+            });
+        }
+
+        function updateSelectionUI() {
+            const count = selectedFiles.size;
+            // 선택 카운트 표시
+            ['selectionCount', 'selectionCountBtn', 'floatingCount'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = count;
+            });
+
+            // 선택 액션 바 표시/숨김
+            const actionBar = document.getElementById('selectionActionBar');
+            if (actionBar) {
+                if (count > 0) {
+                    actionBar.classList.remove('hidden');
+                    actionBar.classList.add('flex');
+                } else {
+                    actionBar.classList.add('hidden');
+                    actionBar.classList.remove('flex');
+                }
+            }
+
+            // 플로팅 바 표시/숨김 (부드러운 애니메이션)
+            const floatingBar = document.getElementById('floatingSelectionBar');
+            if (floatingBar) {
+                if (count > 0) {
+                    floatingBar.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+                    floatingBar.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+                } else {
+                    floatingBar.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+                    floatingBar.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+                }
+            }
+        }
+
+        function sendToMaker() {
+            if (selectedFiles.size === 0) {
+                alert('먼저 Maker로 보낼 표준 작업계획서를 선택해주세요.');
+                return;
+            }
+
+            // 기존에 이미 저장되어 있던 항목들 불러오기 (누적 보존)
+            let existingItems = [];
+            try {
+                const prevRaw = sessionStorage.getItem('makerSelectedStandards') || localStorage.getItem('makerSelectedStandards');
+                const prevTeam = sessionStorage.getItem('makerFromTeam') || localStorage.getItem('makerFromTeam');
+                if (prevRaw && (!prevTeam || prevTeam === currentTeam)) {
+                    const parsed = JSON.parse(prevRaw);
+                    if (Array.isArray(parsed)) existingItems = parsed;
+                }
+            } catch (_) {}
+
+            // 현재 선택된 파일의 상세 정보 구성
+            const currentSelectedItems = allReferenceFiles.filter(f => selectedFiles.has(f.filename)).map(f => ({
+                filename: f.filename,
+                title: f.title || f.filename.replace('.xlsx', ''),
+                category: f.category || f.subfolder || '공통',
+                subfolder: f.subfolder || f.category || '공통',
+                team: currentTeam
+            }));
+
+            // 기존에 저장된 목록은 중복 항목 포함 그대로 100% 보존
+            const existingFilenames = new Set(existingItems.map(it => it.filename));
+            const newlySelectedItems = currentSelectedItems.filter(it => !existingFilenames.has(it.filename));
+            const mergedItems = [...existingItems, ...newlySelectedItems];
+
+            // sessionStorage 및 localStorage에 저장 (탭 이동 또는 브라우저 호환성 완벽 지원)
+            try {
+                const serialized = JSON.stringify(mergedItems);
+                sessionStorage.setItem('makerSelectedStandards', serialized);
+                sessionStorage.setItem('makerFromTeam', currentTeam);
+                sessionStorage.setItem('selectedTeam', currentTeam);
+
+                localStorage.setItem('makerSelectedStandards', serialized);
+                localStorage.setItem('makerFromTeam', currentTeam);
+                localStorage.setItem('selectedTeam', currentTeam);
+                localStorage.setItem('kmci_current_team', currentTeam);
+            } catch(e) {
+                console.error('스토리지 저장 실패:', e);
+            }
+
+            // workplan-maker로 이동
+            window.location.href = `/workplan-maker?team=${encodeURIComponent(currentTeam)}&from=standard-db&count=${mergedItems.length}`;
+        }
+
+
+        function escapeHtml(str) {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeAttr(str) {
+            if (!str) return "";
+            return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        }
+
+        async function downloadStandardFile(filename, btnEl) {
+            if (!filename) return;
+            const originalHtml = btnEl ? btnEl.innerHTML : null;
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.classList.add("opacity-75");
+                btnEl.innerHTML = `
+                    <svg class="w-3.5 h-3.5 animate-spin fill-current shrink-0" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>받는중...</span>
+                `;
+            }
+
+            try {
+                const team = currentTeam || '생산1부';
+                const url = `/api/standard-workplan/download?file=${encodeURIComponent(filename)}&team=${encodeURIComponent(team)}`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    throw new Error(`다운로드 실패 (${res.status})`);
+                }
+                const blob = await res.blob();
+                
+                // 크롬의 '안전하지 않은 다운로드 차단' 보안 정책을 우회하기 위해 Blob URL로 브라우저 내부 메모리 다운로드 트리거
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 1500);
+            } catch (err) {
+                console.error("다운로드 오류:", err);
+                const team = currentTeam || '생산1부';
+                window.location.href = `/api/standard-workplan/download?file=${encodeURIComponent(filename)}&team=${encodeURIComponent(team)}`;
+            } finally {
+                if (btnEl && originalHtml) {
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove("opacity-75");
+                        btnEl.innerHTML = originalHtml;
+                    }, 500);
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+</html>

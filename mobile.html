@@ -1,0 +1,783 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>작업계획서&TBM Maker - 모바일 TBM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f6f8fb;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Pastel Aurora Glows */
+        .aurora-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .aurora-blob {
+            position: absolute;
+            filter: blur(70px);
+            opacity: 0.65;
+            border-radius: 9999px;
+            animation: auroraFloat 16s ease-in-out infinite alternate;
+        }
+        .blob-1 {
+            top: -5%;
+            left: 10%;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(167, 243, 208, 0.65) 0%, rgba(110, 231, 183, 0.25) 60%, transparent 80%);
+        }
+        .blob-2 {
+            top: 35%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(186, 230, 253, 0.7) 0%, rgba(125, 211, 252, 0.25) 60%, transparent 80%);
+            animation-delay: -5s;
+        }
+        @keyframes auroraFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(20px, -15px) scale(1.05); }
+        }
+
+        /* Soft Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+        }
+
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12);
+        }
+
+        #signCanvas {
+            width: 100%;
+            height: 160px;
+            display: block;
+            box-sizing: border-box;
+            border-radius: 14px;
+            transition: all 0.2s ease;
+        }
+        #signCanvas.sign-off {
+            background: rgba(255, 255, 255, 0.65);
+            border: 1.5px dashed #cbd5e1;
+            touch-action: pan-y;
+            cursor: pointer;
+        }
+        #signCanvas.sign-on {
+            background: #ffffff;
+            border: 1.5px solid #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-36 relative">
+    <!-- ── 파스텔 오로라 배경 ── -->
+    <div class="aurora-bg">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2"></div>
+    </div>
+
+    <!-- ── 상단 로고 & 타이틀 바 ── -->
+    <div class="relative z-10 px-5 pt-4 flex items-center justify-between">
+        <img src="./logo.png" alt="금호미쓰이화학" class="h-6 w-auto object-contain">
+        <span class="text-[11px] font-extrabold text-slate-500 tracking-tight">작업계획서&TBM Maker</span>
+    </div>
+
+    <!-- ── 상단 작업명 헤더 카드 ── -->
+    <header class="relative z-10 px-4 pt-3 pb-2">
+        <div class="glass-card rounded-2xl p-5 shadow-xs border-l-4 border-l-emerald-500">
+            <div class="flex items-center justify-between gap-2 flex-wrap mb-1">
+                <span class="text-xs font-bold text-emerald-700 tracking-wider flex items-center gap-1.5 uppercase">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 오늘 TBM 작업
+                </span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span id="teamBadgeMobile" class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md hidden"></span>
+                    <span id="workDate" class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md hidden"></span>
+                </div>
+            </div>
+            <h1 id="workTitle" class="text-xl font-black text-slate-900 mt-1.5 break-keep leading-snug">현장 안전 브리핑</h1>
+            <p id="fileLabel" class="text-xs text-slate-400 mt-1 truncate"></p>
+        </div>
+    </header>
+
+    <main id="content" class="relative z-10 px-4 py-4 space-y-4 hidden">
+        <!-- 기상 특보 박스 -->
+        <section id="alertBox" class="hidden p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 shadow-xs">
+            <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-amber-600 font-bold text-sm">🚨</span>
+                <p class="text-xs font-bold text-amber-900">기상 특보 안내</p>
+            </div>
+            <p id="alertText" class="text-sm font-semibold text-amber-950 leading-relaxed"></p>
+        </section>
+
+        <!-- 화학물질 노출 위험 박스 -->
+        <section id="chemBox" class="hidden p-4 rounded-2xl bg-rose-50/90 border border-rose-200/90 shadow-xs">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <span class="text-rose-600 font-bold text-sm">☣️</span>
+                <p class="text-xs font-bold text-rose-900">화학물질 노출 위험 (피부·눈·호흡기)</p>
+                <span id="chemProcessBadge" class="text-[11px] font-semibold text-rose-800 bg-rose-100 border border-rose-200 px-1.5 py-0.5 rounded hidden"></span>
+            </div>
+            <p id="chemText" class="text-sm font-medium text-rose-950 leading-relaxed break-keep"></p>
+        </section>
+
+        <!-- 3대 핵심 안전 포인트 -->
+        <section class="glass-card rounded-2xl p-5 shadow-xs">
+            <h2 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 핵심 안전 수칙
+            </h2>
+            <ul id="points" class="space-y-2.5"></ul>
+        </section>
+
+        <!-- 현장 TBM 문구 -->
+        <section class="glass-card rounded-2xl p-5 shadow-xs">
+            <h2 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 현장 TBM 문구
+            </h2>
+            <p id="script" class="text-[1.05rem] leading-[2.0] text-slate-800 whitespace-pre-wrap break-keep font-normal"></p>
+        </section>
+
+        <!-- 참석자 서명 구역 -->
+        <section id="signSection" class="glass-card rounded-2xl p-5 shadow-xs space-y-4">
+            <div>
+                <h2 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 참석자 전자 서명
+                </h2>
+                <p class="text-xs text-slate-500 leading-relaxed">각자 본인의 이름과 서명을 작성한 뒤 제출해 주세요. (여러 명이 각자 제출해도 모두 자동 누적 저장됩니다)</p>
+            </div>
+
+            <!-- 현재 서명 완료된 명단 실시간 표시 -->
+            <div id="confirmedBox" class="hidden bg-emerald-50/90 border border-emerald-200/90 rounded-xl p-3.5 space-y-2">
+                <div class="flex items-center justify-between text-xs font-bold text-emerald-800">
+                    <span class="flex items-center gap-1.5">
+                        <span>✅</span> 서명 완료된 작업자 (<span id="confirmedCount">0</span>명)
+                    </span>
+                    <span class="text-[11px] text-emerald-600 font-normal">실시간 누적 중</span>
+                </div>
+                <div id="confirmedBadges" class="flex flex-wrap gap-1.5 pt-0.5"></div>
+            </div>
+
+            <div id="inputFormContainer" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">작업자 성명</label>
+                    <input id="signerName" type="text" class="w-full bg-white/90 border border-slate-200 px-4 py-3 text-sm rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-xs transition-all" placeholder="성명을 입력하세요 (예: 홍길동)" autocomplete="name">
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-bold text-slate-600">서명 패드</label>
+                            <span id="signCanvasHint" class="text-[11px] text-slate-400 font-medium">터치하여 서명 활성화</span>
+                        </div>
+                        <button type="button" onclick="clearCanvas()" class="text-xs font-bold text-slate-500 hover:text-emerald-700 transition-colors">다시 쓰기</button>
+                    </div>
+                    <canvas id="signCanvas" class="sign-off"></canvas>
+                </div>
+
+                <!-- 이 기기에서 대기 중인 서명 목록 (동료 서명 등) -->
+                <ul id="signList" class="space-y-2.5 pt-1"></ul>
+
+                <div class="space-y-2 pt-1">
+                    <button id="confirmBtn" onclick="confirmTbm()" class="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-4 text-sm font-bold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-1.5">
+                        <span>✍️</span> 서명 제출하기
+                    </button>
+                    <button id="addAnotherBtn" type="button" onclick="resetFormForNextSigner()" class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5">
+                        <span>➕</span> 다른 동료 서명 추가하기
+                    </button>
+                    <button id="cancelBtn" type="button" onclick="cancelSubmit()" class="hidden w-full text-xs font-bold text-slate-400 hover:text-rose-600 py-1 transition-colors">
+                        전체 서명 초기화
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <p id="errorBox" class="hidden px-5 py-16 text-sm text-rose-600 text-center font-medium"></p>
+
+    <!-- ── 하단 플로팅 독 (오디오 읽기) ── -->
+    <div class="fixed bottom-0 inset-x-0 bg-white/85 backdrop-blur-lg border-t border-white/90 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40">
+        <button id="ttsBtn" onclick="toggleTts()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3.5 text-sm font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+            <span>🔊</span>
+            <span>대본 자동 읽기 (성우 낭독)</span>
+        </button>
+    </div>
+
+    <!-- ── 토스트 팝업 ── -->
+    <div id="toastPopup" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-xs px-8" onclick="hideToast()">
+        <p id="toastText" class="glass-modal text-slate-800 text-base font-bold px-8 py-5 rounded-2xl text-center shadow-xl"></p>
+    </div>
+
+    <script>
+        const sessionId = location.pathname.split('/').pop();
+        let session = null;
+        let speaking = false;
+        let hasDrawn = false;
+        let pendingSignatures = [];
+        let confirmedSignatures = [];
+        let canvas, ctx;
+        let editingItem = null;
+        let listLocked = false;
+        let canvasActive = false;
+        let drawing = false;
+        let tapStart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSession();
+            if (speechSynthesis.getVoices().length === 0) {
+                speechSynthesis.addEventListener('voiceschanged', () => {});
+            }
+        });
+
+        async function loadSession() {
+            try {
+                const res = await fetch('/api/sessions/' + sessionId);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'TBM을 불러올 수 없습니다.');
+                session = data;
+                renderSession();
+            } catch (err) {
+                document.getElementById('errorBox').textContent = err.message;
+                document.getElementById('errorBox').classList.remove('hidden');
+            }
+        }
+
+        function renderSession() {
+            document.getElementById('content').classList.remove('hidden');
+            document.getElementById('workTitle').textContent = session.workTitle || session.fileName || '오늘 작업';
+            document.getElementById('fileLabel').textContent = session.fileName || '';
+            document.getElementById('script').innerText = session.script || '';
+
+            if (session.teamName) {
+                const teamEl = document.getElementById('teamBadgeMobile');
+                if (teamEl) {
+                    teamEl.textContent = `🏢 ${session.teamName}`;
+                    teamEl.classList.remove('hidden');
+                }
+            }
+
+            if (session.workDate) {
+                const dateEl = document.getElementById('workDate');
+                dateEl.textContent = session.workDate;
+                dateEl.classList.remove('hidden');
+            }
+
+            if (session.weatherAlert) {
+                document.getElementById('alertBox').classList.remove('hidden');
+                document.getElementById('alertText').innerText = session.weatherAlert;
+            }
+
+            if (session.chemicalHazard) {
+                document.getElementById('chemBox').classList.remove('hidden');
+                document.getElementById('chemText').innerText = session.chemicalHazard;
+                const chemProcessBadge = document.getElementById('chemProcessBadge');
+                if (session.chemicalProcess) {
+                    chemProcessBadge.innerText = session.chemicalProcess;
+                    chemProcessBadge.classList.remove('hidden');
+                } else {
+                    chemProcessBadge.classList.add('hidden');
+                }
+            } else {
+                document.getElementById('chemBox').classList.add('hidden');
+            }
+
+            const points = document.getElementById('points');
+            points.innerHTML = '';
+            (session.points || []).forEach((point) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start text-sm text-slate-700 leading-relaxed font-medium';
+                li.innerHTML = `<span class="mr-2.5 font-bold text-emerald-600 mt-0.5">✓</span><span class="break-keep">${escapeHtml(point)}</span>`;
+                points.appendChild(li);
+            });
+
+            confirmedSignatures = (session.signatures || []).slice();
+            pendingSignatures = [];
+            renderConfirmedList();
+            renderPending();
+            requestAnimationFrame(setupCanvas);
+        }
+
+        function koreanMaleVoice() {
+            const voices = speechSynthesis.getVoices().filter((v) => v.lang && v.lang.toLowerCase().startsWith('ko'));
+            if (!voices.length) return null;
+            const score = (voice) => {
+                const name = `${voice.name} ${voice.voiceURI || ''}`.toLowerCase();
+                let points = 0;
+                if (/injoon|in-joon|injun|incheol|in-cheol|인준|인철|male|man|남성/.test(name)) points += 10;
+                if (/heami|sunhi|sun-hi|yuna|hyemi|혜미|선희|유나|female|woman|여성/.test(name)) points -= 10;
+                if (voice.localService) points += 1;
+                return points;
+            };
+            return voices.slice().sort((a, b) => score(b) - score(a))[0];
+        }
+
+        function stopTts() {
+            speaking = false;
+            speechSynthesis.cancel();
+            document.getElementById('ttsBtn').innerHTML = '<span>🔊</span><span>대본 자동 읽기 (음성 낭독)</span>';
+        }
+
+        function playDeviceTts() {
+            const text = (session && session.script) || '';
+            if (!text) {
+                stopTts();
+                return alert('읽을 대본이 없습니다.');
+            }
+            const chunks = text.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+            let index = 0;
+            speaking = true;
+            document.getElementById('ttsBtn').innerHTML = '<span>⏹️</span><span>낭독 중지</span>';
+
+            const speakNext = () => {
+                if (!speaking || index >= chunks.length) {
+                    stopTts();
+                    return;
+                }
+                const utter = new SpeechSynthesisUtterance(chunks[index]);
+                utter.lang = 'ko-KR';
+                utter.pitch = 0.85;
+                utter.rate = 1.05;
+                const voice = koreanMaleVoice();
+                if (voice) utter.voice = voice;
+                utter.onend = () => { index += 1; speakNext(); };
+                utter.onerror = () => stopTts();
+                speechSynthesis.speak(utter);
+            };
+            const start = () => {
+                speechSynthesis.cancel();
+                speakNext();
+            };
+            if (speechSynthesis.getVoices().length === 0) {
+                speechSynthesis.addEventListener('voiceschanged', start, { once: true });
+                setTimeout(start, 400);
+            } else {
+                start();
+            }
+        }
+
+        function toggleTts() {
+            if (speaking) {
+                stopTts();
+                return;
+            }
+            playDeviceTts();
+        }
+
+        function dismissKeyboard() {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+            const signerInput = document.getElementById('signerName');
+            if (signerInput) signerInput.blur();
+        }
+
+        function scrollCanvasIntoCenter() {
+            if (!canvas) return;
+            canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 250);
+        }
+
+        function setCanvasActive(on) {
+            canvasActive = Boolean(on);
+            drawing = false;
+            tapStart = null;
+            if (!canvas) return;
+            canvas.classList.toggle('sign-on', canvasActive);
+            canvas.classList.toggle('sign-off', !canvasActive);
+
+            const hint = document.getElementById('signCanvasHint');
+            if (hint) {
+                if (canvasActive) {
+                    hint.textContent = '✍️ 서명 입력 활성화됨';
+                    hint.className = 'text-[11px] text-emerald-700 font-bold';
+                } else {
+                    hint.textContent = '터치하여 서명 활성화';
+                    hint.className = 'text-[11px] text-slate-400 font-medium';
+                }
+            }
+
+            if (canvasActive) {
+                dismissKeyboard();
+                scrollCanvasIntoCenter();
+            }
+        }
+
+        function setupCanvas() {
+            canvas = document.getElementById('signCanvas');
+            if (!canvas) return;
+            const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 300;
+            const rect = canvas.getBoundingClientRect();
+            const cssWidth = Math.max(rect.width, parentWidth);
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(cssWidth * dpr);
+            canvas.height = Math.floor(160 * dpr);
+            canvas.style.width = cssWidth + 'px';
+            canvas.style.height = '160px';
+            ctx = canvas.getContext('2d');
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(dpr, dpr);
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2.4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            hasDrawn = false;
+            setCanvasActive(false);
+
+            const signerInput = document.getElementById('signerName');
+            if (signerInput && !signerInput.dataset.boundKey) {
+                signerInput.dataset.boundKey = '1';
+                signerInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        dismissKeyboard();
+                        setCanvasActive(true);
+                    }
+                });
+            }
+
+            if (canvas.dataset.bound === '1') return;
+            canvas.dataset.bound = '1';
+
+            const pos = (event) => {
+                const box = canvas.getBoundingClientRect();
+                const point = event.touches ? event.touches[0] : event;
+                return { x: point.clientX - box.left, y: point.clientY - box.top };
+            };
+            const start = (event) => {
+                dismissKeyboard();
+
+                if (!canvasActive) {
+                    const p = pos(event);
+                    tapStart = { x: p.x, y: p.y, t: Date.now() };
+                    return;
+                }
+                event.preventDefault();
+                drawing = true;
+                const p = pos(event);
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+            };
+            const move = (event) => {
+                if (!canvasActive) {
+                    if (!tapStart) return;
+                    const p = pos(event);
+                    if (Math.hypot(p.x - tapStart.x, p.y - tapStart.y) > 12) tapStart = null;
+                    return;
+                }
+                if (!drawing) return;
+                event.preventDefault();
+                const p = pos(event);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+                hasDrawn = true;
+            };
+            const end = () => {
+                if (!canvasActive) {
+                    if (tapStart && Date.now() - tapStart.t < 500) {
+                        setCanvasActive(true);
+                    }
+                    tapStart = null;
+                    return;
+                }
+                drawing = false;
+            };
+
+            canvas.addEventListener('click', () => {
+                if (!canvasActive) setCanvasActive(true);
+            });
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+            canvas.addEventListener('touchstart', start, { passive: false });
+            canvas.addEventListener('touchmove', move, { passive: false });
+            canvas.addEventListener('touchend', end);
+            document.addEventListener('touchstart', (event) => {
+                if (canvasActive && event.target !== canvas && !canvas.contains(event.target) && event.target.id !== 'signCanvasHint') {
+                    setCanvasActive(false);
+                }
+            }, { passive: true });
+            document.addEventListener('mousedown', (event) => {
+                if (canvasActive && event.target !== canvas && !canvas.contains(event.target) && event.target.id !== 'signCanvasHint') {
+                    setCanvasActive(false);
+                }
+            });
+        }
+
+        function clearCanvas() {
+            dismissKeyboard();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const dpr = window.devicePixelRatio || 1;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2.4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            hasDrawn = false;
+            setCanvasActive(true);
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function renderConfirmedList() {
+            const box = document.getElementById('confirmedBox');
+            const countEl = document.getElementById('confirmedCount');
+            const badgesEl = document.getElementById('confirmedBadges');
+            if (!box || !countEl || !badgesEl) return;
+
+            if (confirmedSignatures.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            box.classList.remove('hidden');
+            countEl.textContent = confirmedSignatures.length;
+            badgesEl.innerHTML = confirmedSignatures.map((s) => `
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-emerald-200/90 rounded-lg text-xs font-bold text-emerald-800 shadow-2xs">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    ${escapeHtml(s.name)}
+                </span>
+            `).join('');
+        }
+
+        function addSignature() {
+            dismissKeyboard();
+            const name = document.getElementById('signerName').value.trim();
+            if (!name) return alert('이름을 입력해주세요.');
+            const imageDataUrl = hasDrawn
+                ? canvas.toDataURL('image/png')
+                : (editingItem && editingItem.imageDataUrl);
+            if (!imageDataUrl) return alert('서명을 작성해주세요.');
+
+            pendingSignatures.push({
+                name,
+                signedAt: new Date().toISOString(),
+                imageDataUrl,
+            });
+            editingItem = null;
+            document.getElementById('signerName').value = '';
+            clearCanvas();
+            setCanvasActive(false);
+            renderPending();
+        }
+
+        function renderPending() {
+            const list = document.getElementById('signList');
+            if (!list) return;
+            list.innerHTML = pendingSignatures.map((item, idx) => `
+                <li class="bg-white/80 border border-slate-200/90 rounded-xl p-3 flex items-center justify-between gap-3 shadow-xs">
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold text-slate-800">${escapeHtml(item.name)}</p>
+                        ${item.imageDataUrl ? `<img src="${item.imageDataUrl}" alt="${escapeHtml(item.name)} 서명" class="mt-1.5 h-10 bg-white border border-slate-100 rounded-lg p-1">` : ''}
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" onclick="editSignature(${idx})" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 px-2 py-1 bg-emerald-50 rounded-lg">수정</button>
+                        <button type="button" onclick="removeSignature(${idx})" class="text-xs font-bold text-rose-700 hover:text-rose-800 px-2 py-1 bg-rose-50 rounded-lg">삭제</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function editSignature(idx) {
+            applyEditorToList();
+            editingItem = pendingSignatures[idx];
+            pendingSignatures.splice(idx, 1);
+            document.getElementById('signerName').value = editingItem.name || '';
+            if (canvas) clearCanvas();
+            renderPending();
+        }
+
+        function removeSignature(idx) {
+            pendingSignatures.splice(idx, 1);
+            renderPending();
+        }
+
+        function applyEditorToList() {
+            const nameInput = document.getElementById('signerName');
+            const name = (nameInput ? nameInput.value.trim() : '') || (editingItem && editingItem.name) || '';
+            const imageDataUrl = hasDrawn ? canvas.toDataURL('image/png') : (editingItem && editingItem.imageDataUrl);
+            if (name && imageDataUrl) {
+                pendingSignatures.push({
+                    name,
+                    signedAt: (editingItem && editingItem.signedAt) || new Date().toISOString(),
+                    imageDataUrl,
+                });
+                editingItem = null;
+                if (nameInput) nameInput.value = '';
+                if (canvas) clearCanvas();
+                setCanvasActive(false);
+            }
+        }
+
+        let toastTimer = null;
+
+        function hideToast() {
+            const popup = document.getElementById('toastPopup');
+            if (popup) popup.classList.add('hidden');
+            if (toastTimer) {
+                clearTimeout(toastTimer);
+                toastTimer = null;
+            }
+        }
+
+        function showToast(text) {
+            const popup = document.getElementById('toastPopup');
+            const label = document.getElementById('toastText');
+            label.textContent = text;
+            popup.classList.remove('hidden');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(hideToast, 2000);
+        }
+
+        function resetFormForNextSigner() {
+            const confirmBtn = document.getElementById('confirmBtn');
+            const addAnotherBtn = document.getElementById('addAnotherBtn');
+            const signerName = document.getElementById('signerName');
+
+            if (signerName) {
+                signerName.value = '';
+                signerName.disabled = false;
+                signerName.focus();
+            }
+            clearCanvas();
+            setCanvasActive(false);
+
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<span>✍️</span> 서명 제출하기';
+                confirmBtn.className = 'w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-4 text-sm font-bold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-1.5';
+            }
+            if (addAnotherBtn) {
+                addAnotherBtn.classList.add('hidden');
+            }
+            scrollCanvasIntoCenter();
+        }
+
+        async function cancelSubmit() {
+            if (!confirm('등록된 전체 서명을 초기화하시겠습니까? (주의: 모든 작업자의 서명이 삭제됩니다)')) return;
+
+            const btn = document.getElementById('cancelBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '초기화 중...';
+            }
+            try {
+                const res = await fetch('/api/sessions/' + sessionId + '/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || '초기화에 실패했습니다.');
+                session.status = '배포됨';
+                confirmedSignatures = [];
+                pendingSignatures = [];
+                renderConfirmedList();
+                renderPending();
+                resetFormForNextSigner();
+                showToast('전체 서명이 초기화되었습니다.');
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '전체 서명 초기화';
+                }
+            }
+        }
+
+        async function confirmTbm() {
+            applyEditorToList();
+            renderPending();
+            if (pendingSignatures.length === 0) {
+                return alert('작업자 성명과 서명을 먼저 작성해주세요.');
+            }
+
+            const btn = document.getElementById('confirmBtn');
+            const addAnotherBtn = document.getElementById('addAnotherBtn');
+            const signerName = document.getElementById('signerName');
+
+            btn.disabled = true;
+            btn.textContent = '제출 중...';
+            btn.className = 'w-full bg-emerald-700 text-white/80 py-4 text-sm font-bold rounded-xl shadow-none cursor-wait transition-all flex items-center justify-center gap-1.5';
+
+            try {
+                const res = await fetch('/api/sessions/' + sessionId + '/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signatures: pendingSignatures }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || '제출에 실패했습니다.');
+
+                // 서버에서 누적 병합된 최신 명단 반영
+                session.status = '완료';
+                if (Array.isArray(data.signatures)) {
+                    confirmedSignatures = data.signatures;
+                } else {
+                    confirmedSignatures = [...confirmedSignatures, ...pendingSignatures];
+                }
+                pendingSignatures = [];
+                renderConfirmedList();
+                renderPending();
+
+                if (signerName) {
+                    signerName.value = '';
+                    signerName.disabled = true;
+                }
+                clearCanvas();
+                setCanvasActive(false);
+
+                // 현재 기기에서 제출 완료 상태 표시 (비활성화)
+                btn.disabled = true;
+                btn.textContent = `✓ 서명 제출 완료됨 (총 ${confirmedSignatures.length}명 참여)`;
+                btn.className = 'w-full bg-slate-200 text-slate-500 py-4 text-sm font-bold rounded-xl shadow-none cursor-not-allowed transition-all flex items-center justify-center gap-1.5';
+
+                if (addAnotherBtn) {
+                    addAnotherBtn.classList.remove('hidden');
+                }
+
+                showToast('서명이 성공적으로 제출되었습니다!');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>✍️</span> 서명 제출하기';
+                btn.className = 'w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-4 text-sm font-bold rounded-xl shadow-md shadow-emerald-500/25 transition-all flex items-center justify-center gap-1.5';
+                alert(err.message);
+            }
+        }
+    </script>
+</body>
+</html>
